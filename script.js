@@ -1,5 +1,5 @@
 // ========================================================
-// ★★★ データ編集エリア（ここをいじれば追加・変更できます） ★★★
+// ★★★ データ編集エリア ★★★
 // ========================================================
 
 // 🖼️ 1. 階層ごとのマップ画像ファイル名
@@ -11,55 +11,48 @@ const MAP_IMAGES = {
 };
 
 // 🛍️ 2. 出店（クラス・部活）データ
-// 【追加方法】 以下の形式（ { id: 数値, ... }, ）をコピーして末尾（ ] の手前）に貼り付け、数字や文字を書き換えてください。
-// ※ x と y は、マップ画像内の座標（左下が 0,0 で、右上が 1000,1000 になるように自動調整されます）
+// 💡 【座標(x, y)のヒント】：今回の横長マップでは、以下を基準にするとピンが置きやすいです。
+// 左端(商業教育棟)あたり ➡ x: 100
+// 真ん中(A棟・C棟)あたり ➡ x: 450
+// 右端(B棟・体育館)あたり ➡ x: 800
+// 下側 ➡ y: 50  /  真ん中 ➡ y: 200  /  上側 ➡ y: 350
 const shopData = [
-    { id: 1, floor: '1F', title: '1-1：お化け屋敷「呪われた教室」', genre: 'アトラクション', x: 200, y: 400, menu: '恐怖度MAX！暑い夏を吹き飛ばす最恐のお化け屋敷。心臓の弱い方はご注意ください。' },
-    { id: 2, floor: '1F', title: '1-2：手作りキックターゲット', genre: 'アトラクション', x: 500, y: 350, menu: '高得点を狙って豪華景品をゲットしよう！お子様大歓迎！' },
-    { id: 3, floor: '1F', title: 'PTA：手作りパン＆バザー', genre: '食品', x: 800, y: 450, menu: '焼き立てのメロンパン、あんパン、クロワッサンを販売中！' },
-    { id: 4, floor: '2F', title: '2-1：チュロスファクトリー', genre: '食品', x: 300, y: 600, menu: '揚げたてサクサクのチュロス！\n・シナモンシュガー：150円\n・チョコソース：180円' },
-    { id: 5, floor: '2F', title: '2-2：カジノ・ロワイヤル', genre: 'アトラクション', x: 600, y: 650, menu: '本格的なブラックジャックやルーレットを擬似チップで体験！' },
-    { id: 6, floor: '3F', title: '3-1：レトロゲームセンター', genre: 'アトラクション', x: 500, y: 700, menu: '懐かしのドット絵ゲームや手作りスマートボールで遊べます！' },
-    { id: 7, floor: '4F', title: '4-1：パソコン部「自作ゲーム体験」', genre: '展示', x: 400, y: 500, menu: '部員が制作したオリジナルゲームが無料で遊べます！ハイスコアを狙え！' }
+    { id: 1, floor: '1F', title: '3-7：マーケティング部', genre: '展示', x: 120, y: 150, menu: '部活で開発した商品の販売と活動報告を行います！' },
+    { id: 2, floor: '1F', title: '3-2：人形浄瑠璃部', genre: '展示', x: 380, y: 340, menu: '伝統ある人形浄瑠璃の公演と、人形の展示を行っています。' },
+    { id: 3, floor: '2F', title: '2-6：マーケティング部', genre: '食品', x: 110, y: 320, menu: '美味しいお菓子や特産品を販売しています！' },
+    { id: 4, floor: '3F', title: '1-1：写真部', genre: '展示', x: 360, y: 340, menu: '部員が撮影した渾身の一枚を展示中。お気に入りの作品に投票してください！' },
+    { id: 5, floor: '4F', title: '軽音楽部', genre: 'アトラクション', x: 280, y: 340, menu: '4階A棟端の部室にて、アコースティックミニライブを開催中！' }
 ];
 
 // 🚻 3. トイレ・救護室などの設備データ
-// 【追加方法】 shopDataと同様に、{} のカタマリを増やしていけば、マップ上に専用のアイコンでピンが立ちます。
 const facilityData = [
-    { name: "1F トイレ", floor: "1F", x: 150, y: 450, icon: "🚻" },
-    { name: "2F トイレ", floor: "2F", x: 150, y: 550, icon: "🚻" },
-    { name: "3F トイレ", floor: "3F", x: 150, y: 650, icon: "🚻" },
-    { name: "4F トイレ", floor: "4F", x: 150, y: 750, icon: "🚻" },
-    { name: "救護室・本部", floor: "1F", x: 450, y: 250, icon: "🚑" }
+    { name: "1F 事務室・AED", floor: "1F", x: 360, y: 80, icon: "🚑" },
+    { name: "2F トイレ", floor: "2F", x: 150, y: 220, icon: "🚻" },
+    { name: "3F トイレ", floor: "3F", x: 150, y: 220, icon: "🚻" },
+    { name: "4F トイレ", floor: "4F", x: 150, y: 220, icon: "🚻" }
 ];
 
 // ⏱️ 4. 時程（タイムライン）データ
-// 【追加方法】 idが被らないように注意して増やしてください。dayは「1」か「2」で日数が分かれます。
 const timelineData = [
     { id: 1, day: 1, time: "10:00 - 11:00", name: "吹奏楽部：オープニングアクト", delay: 0 },
     { id: 2, day: 1, time: "11:30 - 13:00", name: "軽音楽部：無敵ライブ", delay: 0 },
-    { id: 3, day: 1, time: "14:00 - 15:00", name: "ダンス部：Break the Limit", delay: 0 },
-    { id: 4, day: 2, time: "10:00 - 11:30", name: "軽音楽部：後夜祭争奪バトル", delay: 0 },
-    { id: 5, day: 2, time: "13:00 - 14:00", name: "ダンス部：ファイナルステージ", delay: 0 },
-    { id: 6, day: 2, time: "14:30 - 15:30", name: "吹奏楽部：グランドフィナーレ", delay: 0 }
+    { id: 3, day: 2, time: "13:00 - 14:00", name: "ダンス部：ファイナルステージ", delay: 0 }
 ];
 
 // 📢 5. お知らせデータ
 const noticeData = [
     { title: "熱中症にご注意ください", sub: "こまめな水分補給をお願いします。" },
-    { title: "ゴミの分別回収にご協力ください", sub: "各階のエレベーター前にゴミ箱を設置しています。" },
     { title: "落とし物・迷子について", sub: "1階職員室前ロビーの本部までお越しください。" }
 ];
 
 // 🤝 6. ご挨拶データ
 const greetingData = [
-    { role: "文化祭実行委員長より", name: "実行委員長 厚木 王子", text: "第3回王華祭へようこそ！今年のテーマは「百花繚乱」です。生徒一同、この日のために一丸となって準備を進めてきました。各クラスの工夫を凝らした出店や、熱気あふれるステージを心ゆくまでお楽しみください！" },
-    { role: "学校長より", name: "神奈川県立厚木王子高等学校 長", text: "ご来校ありがとうございます。" }
+    { role: "文化祭実行委員長より", name: "実行委員長", text: "第3回王子高文化祭へようこそ！心ゆくまでお楽しみください！" }
 ];
 
 
 // ========================================================
-// ★★★ システム処理エリア（領域固定・縮み防止対策済み） ★★★
+// ★★★ システム処理エリア（横長マップ・領域固定対策済み） ★★★
 // ========================================================
 
 let currentFloor = '1F';
@@ -71,8 +64,10 @@ let currentImageLayer = null;
 let markersGroup = [];
 let favorites = JSON.parse(localStorage.getItem('festival_favs')) || [];
 
-// マップの移動可能範囲（左下[0,0] から 右上[1000,1000] に空間を固定）
-const MAP_BOUNDS = [[0, 0], [1000, 1000]];
+// 🗺️ お送りいただいた画像の縦横比（約 900 × 410）に空間のサイズを最適化
+const MAP_WIDTH = 900;
+const MAP_HEIGHT = 410;
+const MAP_BOUNDS = [[0, 0], [MAP_HEIGHT, MAP_WIDTH]];
 
 window.onload = function() {
     initImageMap();
@@ -83,41 +78,38 @@ window.onload = function() {
     updateNotificationStatusDisplay();
 };
 
-// 🖼️ マップ初期化
 function initImageMap() {
+    // 完全に枠外へはみ出さないように制限を設定
     map = L.map('map', {
         crs: L.CRS.Simple,
-        minZoom: -1,             // 引き（ズームアウト）の限界
-        maxZoom: 2,              // 寄り（ズームイン）の限界
-        maxBounds: MAP_BOUNDS,   // 🗺️【領域固定】これより外にはドラッグできなくなります
-        maxBoundsViscosity: 1.0, // 🗺️ 引っ張ってもゴムみたいに戻り、完全に境界の外へ行かせない
-        attributionControl: false
+        minZoom: -1,             // 画面に全体が収まる引きの限界
+        maxZoom: 1.5,            // 拡大の限界
+        maxBounds: MAP_BOUNDS,   // 【領域固定】画像のサイズぴったりにロック
+        maxBoundsViscosity: 1.0, // 【はみ出し防止】これ以上引っ張っても絶対にズレない
+        attributionControl: false,
+        zoomSnap: 0.1            // ズームの滑らかさを調整
     });
 
-    // 初期表示の表示位置を画像全体（MAP_BOUNDS）にフィットさせる
-    map.fitBounds(MAP_BOUNDS);
     updateMapFloorImage();
 }
 
-// 🗺️ 画像の切り替えとサイズ・比率の適正化
 function updateMapFloorImage() {
     if (currentImageLayer) {
         map.removeLayer(currentImageLayer);
     }
     const imageUrl = MAP_IMAGES[currentFloor] || 'map1f.png';
 
-    // 💡 imageOverlay の第3引数にオプションを追加。
-    // スタイルを上書きして、どんなサイズの画像が来ても縦横比が潰れない（縮こまらない）ように対策
+    // 横長画像として正しくマッピング
     currentImageLayer = L.imageOverlay(imageUrl, MAP_BOUNDS, {
         className: 'festival-map-image'
     }).addTo(map);
 
-    // 画像の潰れ・トリミング失敗感を防ぐためのCSSを動的に適用
-    const style = document.createElement('style');
-    style.innerHTML = `.festival-map-image { object-fit: contain !important; }`;
-    document.head.appendChild(style);
+    // 画面サイズが変わっても、常に画像全体がぴったり綺麗に収まる位置に自動リセット
+    map.fitBounds(MAP_BOUNDS);
+    
+    // 現在のズーム位置より引けないように最小ズームを自動ロック（灰色になるのを防ぐ）
+    map.setMinZoom(map.getBoundsZoom(MAP_BOUNDS));
 
-    map.invalidateSize();
     updateMapMarkers();
 }
 
@@ -132,7 +124,7 @@ function switchPage(pageId) {
     if(pageId === 'map-page' && map) {
         setTimeout(() => { 
             map.invalidateSize(); 
-            map.fitBounds(MAP_BOUNDS); // ページ切り替え時にも位置をリセットして迷子防止
+            map.fitBounds(MAP_BOUNDS); 
         }, 200);
     }
 }
@@ -229,7 +221,7 @@ function renderShops() {
             </div>
             <div class="shop-details" id="details-${shop.id}">
                 <div class="details-left">
-                    <div class="logo-dummy">NO IMAGE<br><span style="font-size:0.6rem;">王子高文化祭</span></div>
+                    <div class="logo-dummy">NO IMAGE<br><span style="font-size:0.6rem;">文化祭</span></div>
                 </div>
                 <div class="details-right">
                     <span class="menu-headline">📋 出店内容・メニュー</span>
@@ -408,7 +400,7 @@ function simulateDelay(minutes) {
     document.getElementById('alert-message').innerText = msg;
     alertBar.style.display = 'flex';
 
-    sendSystemNotification(minutes > 0 ? "⚠️ ステージ遅延情報" : "✅ 進行状況復急", msg);
+    sendSystemNotification(minutes > 0 ? "⚠️ ステージ遅延情報" : "✅ 進行状況復帰", msg);
     toggleSidebar();
 }
 
