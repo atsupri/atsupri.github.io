@@ -31,7 +31,7 @@
         <div style="width: 40px;"></div>
     </header>
 
-    <!-- 📂 ドロワーメニュー＆サイドバー（検索機能をここに集約！） -->
+    <!-- 📂 ドロワーメニュー＆サイドバー（全館検索エリア） -->
     <div id="menu-overlay" class="menu-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar" class="app-sidebar">
         <div class="sidebar-header">
@@ -45,7 +45,6 @@
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
                 <input type="text" id="sidebar-search-box" placeholder="全階層からお店を検索..." oninput="filterSidebarShops()">
             </div>
-            <!-- 検索結果がここにリアルタイム表示される -->
             <div id="sidebar-search-results" class="sidebar-results-list"></div>
         </div>
 
@@ -84,7 +83,7 @@
             <!-- Leafletマップ土台 -->
             <div id="map"></div>
 
-            <!-- ジャンルフィルター（メイン画面用） -->
+            <!-- ジャンルフィルター -->
             <div class="filter-section">
                 <div class="tag-container">
                     <button class="tag-btn active" onclick="filterTag('すべて', this)">全て</button>
@@ -94,7 +93,7 @@
                 </div>
             </div>
 
-            <!-- 出店アコーディオンリスト（選んでいる階のものだけスッキリ表示） -->
+            <!-- 出店アコーディオンリスト -->
             <h3 id="floor-title" class="section-title">1Fの出店一覧</h3>
             <div id="shop-list-container" class="shop-list"></div>
         </section>
