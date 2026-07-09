@@ -1,6 +1,3 @@
-/* ========================================================
-   🎨 システム共通設定 & ベースデザイン
-   ======================================================== */
 :root {
     --primary: #1e3a8a;
     --primary-light: #eff6ff;
@@ -43,7 +40,6 @@ body {
     z-index: 999;
     font-size: 0.85rem;
     font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 .alert-content i { margin-right: 8px; color: #dc2626; }
 .alert-close-btn { background: none; border: none; font-size: 1.2rem; color: #991b1b; cursor: pointer; }
@@ -62,28 +58,43 @@ body {
     justify-content: space-between;
     padding: 0 16px;
     z-index: 1000;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .app-title { font-size: 1.15rem; font-weight: bold; letter-spacing: 0.05em; }
 .menu-toggle-btn { background: none; border: none; color: white; font-size: 1.25rem; cursor: pointer; width: 40px; height: 40px; }
 
-/* 📂 ドロワーサイドバー */
+/* 📂 ドロワーサイドバー（検索対応カスタム） */
 .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1001; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
 .menu-overlay.show { opacity: 1; pointer-events: auto; }
-.app-sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 1002; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 10px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; }
+.app-sidebar { position: fixed; top: 0; left: -300px; width: 300px; height: 100%; background: white; z-index: 1002; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 10px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
 .app-sidebar.open { left: 0; }
-.sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
-.sidebar-header h2 { font-size: 1.1rem; color: var(--primary); }
+.sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.sidebar-header h2 { font-size: 1.05rem; color: var(--primary); }
 .sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-sub); cursor: pointer; }
-.sidebar-nav button { width: 100%; background: none; border: none; text-align: left; padding: 12px 16px; font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 12px; border-radius: 6px; cursor: pointer; margin-bottom: 4px; color: var(--text-main); }
-.sidebar-nav button:active { background: var(--primary-light); color: var(--primary); }
-.sidebar-divider { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); margin: 20px 0 10px 4px; letter-spacing: 0.05em; }
 
-/* 🛠️ 管理者パネル（シミュレーター） */
-.admin-panel { background: #f3f4f6; border: 1px solid var(--border); padding: 12px; border-radius: 8px; font-size: 0.85rem; }
+/* 🔍 サイドバー内検索デザイン */
+.sidebar-search-section { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 10px; }
+.search-bar-wrapper { position: relative; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 0.9rem; }
+#sidebar-search-box { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: #f3f4f6; outline: none; }
+#sidebar-search-box:focus { background: white; border-color: var(--primary); }
+.sidebar-results-list { max-height: 220px; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+
+/* サイドバー内検索結果の個別カード */
+.sidebar-result-item { background: #f9fafb; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left; transition: background 0.2s; }
+.sidebar-result-item:active { background: var(--primary-light); }
+.sidebar-result-floor { font-size: 0.65rem; font-weight: bold; background: #e0f2fe; color: #0369a1; padding: 2px 4px; border-radius: 3px; margin-right: 6px; }
+.sidebar-result-title { font-size: 0.8rem; font-weight: bold; color: var(--text-main); }
+.sidebar-result-menu { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sidebar-nav button { width: 100%; background: none; border: none; text-align: left; padding: 10px 12px; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 12px; border-radius: 6px; cursor: pointer; color: var(--text-main); }
+.sidebar-nav button:active { background: var(--primary-light); color: var(--primary); }
+.sidebar-divider { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); margin: 14px 0 6px 4px; }
+
+/* 🛠️ 管理者パネル */
+.admin-panel { background: #f3f4f6; border: 1px solid var(--border); padding: 10px; border-radius: 8px; font-size: 0.8rem; }
 .admin-panel label { font-weight: bold; display: block; margin-bottom: 4px; }
-.admin-panel select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #d1d5db; margin-bottom: 10px; }
-.admin-buttons { display: flex; flex-direction: column; gap: 6px; }
+.admin-panel select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #d1d5db; margin-bottom: 8px; }
+.admin-buttons { display: flex; flex-direction: column; gap: 4px; }
 .admin-btn { width: 100%; border: none; padding: 8px; border-radius: 4px; font-weight: bold; text-align: center !important; justify-content: center !important; color: white !important; cursor: pointer; }
 .admin-btn.delay { background: #eab308 !important; }
 .admin-btn.reset { background: #10b981 !important; }
@@ -95,106 +106,64 @@ body {
     background: #ffffff !important;
     border-bottom: 1px solid var(--border);
 }
-.festival-map-image {
-    object-fit: contain !important;
-    transform-origin: center center;
-}
+.festival-map-image { object-fit: contain !important; }
 
-/* 📌 Leafletポップアップの理想的デザインカスタマイズ（画像再現用） */
+/* 📌 Leafletポップアップの再現用デザイン */
 .leaflet-popup-content-wrapper {
     border-radius: 16px !important;
     padding: 4px 6px !important;
     box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
 }
-.leaflet-popup-content {
-    margin: 12px 14px !important;
-    line-height: 1.3 !important;
-}
-/* ポップアップ内の閉じるボタンをすっきりさせる */
-.leaflet-popup-close-button {
-    top: 8px !important;
-    right: 8px !important;
-    font-size: 16px !important;
-    color: #6b7280 !important;
-}
+.leaflet-popup-content { margin: 12px 14px !important; line-height: 1.3 !important; }
+.leaflet-popup-close-button { top: 8px !important; right: 8px !important; font-size: 16px !important; color: #6b7280 !important; }
+.popup-location { font-size: 0.85rem; font-weight: bold; color: #374151; margin-bottom: 2px; }
+.popup-title { font-size: 0.95rem; font-weight: bold; color: #111827; margin-bottom: 8px; }
+.popup-img-wrapper { width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #e5e7eb; border: 1px solid #e5e7eb; }
+.popup-img { width: 100%; height: 100%; object-fit: cover; }
 
-/* ポップアップ内の構造 */
-.popup-location {
-    font-size: 0.85rem;
-    font-weight: bold;
-    color: #374151;
-    margin-bottom: 2px;
-}
-.popup-title {
-    font-size: 0.95rem;
-    font-weight: bold;
-    color: #111827;
-    margin-bottom: 8px;
-}
-.popup-img-wrapper {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    border-radius: 10px;
-    overflow: hidden;
-    background: #e5e7eb;
-    border: 1px solid #e5e7eb;
-}
-.popup-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* 🚻 トイレ・設備用カスタムピン */
+/* 🚻 カスタムピン */
 .custom-toilet-icon { background: none; border: none; }
 .custom-toilet-icon-inner { background: white; border: 2px solid #3b82f6; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
 
 /* 階層切り替えタブ */
-.tab-container { display: flex; background: white; padding: 6px; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-.tab-btn { flex: 1; border: none; background: #f3f4f6; padding: 10px 0; font-size: 0.85rem; font-weight: bold; border-radius: 6px; color: var(--text-sub); cursor: pointer; transition: all 0.2s; }
+.tab-container { display: flex; background: white; padding: 6px; gap: 6px; }
+.tab-btn { flex: 1; border: none; background: #f3f4f6; padding: 10px 0; font-size: 0.85rem; font-weight: bold; border-radius: 6px; color: var(--text-sub); cursor: pointer; }
 .tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 6px rgba(30,58,138,0.2); }
 
-/* 🔍 検索・フィルターエリア */
-.search-filter-section { padding: 12px 16px; background: white; border-bottom: 1px solid var(--border); }
-.search-bar-wrapper { position: relative; margin-bottom: 10px; }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 0.9rem; }
-#search-box { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: #f3f4f6; outline: none; }
-#search-box:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,58,138,0.1); }
+/* フィルターエリア（メイン画面） */
+.filter-section { padding: 12px 16px 4px; background: white; }
 .tag-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
 .tag-container::-webkit-scrollbar { display: none; }
 .tag-btn { shrink: 0; white-space: nowrap; border: 1px solid var(--border); background: white; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; border-radius: 20px; color: var(--text-main); cursor: pointer; }
 .tag-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 
-/* 📋 出店カード一覧（アコーディオン） */
+/* 📋 出店カード一覧 */
 .section-title { font-size: 0.95rem; font-weight: bold; padding: 14px 16px 6px; color: var(--text-sub); }
 .shop-list { padding: 0 16px 16px; }
-.shop-card-wrapper { background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.shop-card-wrapper { background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
 .shop-card { padding: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
 .shop-loc { background: #e0f2fe; color: #0369a1; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-right: 12px; shrink: 0; }
 .shop-title { flex: 1; font-weight: bold; font-size: 0.9rem; color: var(--text-main); display: flex; flex-direction: column; gap: 2px; }
-.shop-genre { font-size: 0.75rem; color: var(--text-sub); font-weight: normal; }
+.shop-genre { font-size: 0.75rem; color: var(--text-sub); }
 .shop-card i { transition: transform 0.2s ease; }
 
 /* アコーディオン展開パーツ */
-.shop-details { display: none; padding: 0 14px 14px; border-top: 1px dashed var(--border); background: #fafafa; grid-template-columns: 75px 1fr; gap: 12px; align-items: start; animation: slideDown 0.20s ease-out; }
+.shop-details { display: none; padding: 0 14px 14px; border-top: 1px dashed var(--border); background: #fafafa; grid-template-columns: 75px 1fr; gap: 12px; align-items: start; }
 .shop-details.open { display: grid; padding-top: 14px; }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-.logo-dummy { width: 75px; height: 75px; background: #e5e7eb; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-align: center; border: 1px solid #d1d5db; line-height: 1.2; overflow: hidden; }
+.logo-dummy { width: 75px; height: 75px; background: #e5e7eb; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-align: center; border: 1px solid #d1d5db; overflow: hidden; }
 .logo-dummy img { width: 100%; height: 100%; object-fit: cover; }
 .details-right { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
 .menu-headline { font-size: 0.75rem; font-weight: bold; color: var(--primary); margin-bottom: 4px; display: block; }
 .menu-text { font-size: 0.8rem; color: #374151; line-height: 1.45; margin-bottom: 8px; }
 .card-actions { display: flex; gap: 6px; }
 .map-go-btn { background: var(--primary); color: white; border: none; padding: 6px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-.map-go-btn:active { background: #111827; }
 
-/* ⏱️ タイムラインデザイン */
+/* ⏱️ タイムライン */
 .day-selector { display: flex; background: white; border-bottom: 1px solid var(--border); padding: 8px 16px; gap: 8px; }
 .day-btn { flex: 1; border: 1px solid var(--border); background: white; padding: 8px 0; font-size: 0.85rem; font-weight: bold; border-radius: 6px; color: var(--text-main); cursor: pointer; }
 .day-btn.active { background: #374151; color: white; border-color: #374151; }
 .timeline-wrapper { padding: 20px 16px; }
-.time-slot { background: white; border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 14px; border-radius: 0 8px 8px 0; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.time-slot { background: white; border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 14px; border-radius: 0 8px 8px 0; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 .time-slot.status-delayed { border-left-color: #eab308; background: #fffbeb; }
 .time-text { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 2px; }
 .band-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; color: var(--text-main); }
@@ -203,32 +172,29 @@ body {
 .fav-btn { background: none; border: none; font-size: 1.35rem; color: #d1d5db; cursor: pointer; padding: 4px; }
 .fav-btn.active { color: #f59e0b; }
 
-/* 📌 フッターナビゲーション */
-.app-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; border-top: 1px solid var(--border); display: flex; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.03); }
-.page-tab-btn { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.7rem; font-weight: 500; gap: 4px; cursor: pointer; }
+/* 📌 フッター */
+.app-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; border-top: 1px solid var(--border); display: flex; z-index: 1000; }
+.page-tab-btn { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.7rem; font-weight: 500; gap: 4px; }
 .page-tab-btn i { font-size: 1.2rem; }
 .page-tab-btn.active { color: var(--primary); font-weight: bold; }
 
-/* 🖼️ モーダル構造 */
+/* 🖼️ モーダル */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
 .modal.show { opacity: 1; pointer-events: auto; }
-.modal-content { background: white; border-radius: 12px; width: 100%; max-width: 400px; max-height: 80%; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: zoomIn 0.2s ease; }
-@keyframes zoomIn { from { transform: scale(0.95); } to { transform: scale(1); } }
-.modal-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-content { background: white; border-radius: 12px; width: 100%; max-width: 400px; max-height: 80%; display: flex; flex-direction: column; padding: 20px; }
+.modal-header { padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { font-size: 1rem; color: var(--text-main); }
 .modal-header button { background: none; border: none; font-size: 1.5rem; color: var(--text-sub); cursor: pointer; }
-.modal-body-list { padding: 16px; overflow-y: auto; list-style-type: none; }
-.modal-body-list li { font-size: 0.85rem; font-weight: bold; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border); line-height: 1.4; }
-.modal-body-list li:last-child { border: none; margin: 0; padding: 0; }
+.modal-body-list { padding-top: 12px; overflow-y: auto; list-style-type: none; }
+.modal-body-list li { font-size: 0.85rem; font-weight: bold; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border); }
 .notice-sub { font-weight: normal; color: var(--text-sub); display: block; font-size: 0.75rem; margin-top: 2px; }
-.modal-body-text { padding: 16px; overflow-y: auto; font-size: 0.85rem; line-height: 1.5; }
+.modal-body-text { padding-top: 12px; overflow-y: auto; font-size: 0.85rem; line-height: 1.5; }
 .greeting-section { margin-bottom: 14px; }
-.greeting-role { font-weight: bold; color: var(--primary); margin-bottom: 4px; }
-.greeting-name { text-align: right; font-weight: bold; color: var(--text-sub); margin-top: 4px; }
-.modal-body-p { padding: 20px 16px; font-size: 0.9rem; }
-.desc-text { color: var(--text-sub); font-size: 0.75rem; margin-top: 6px; margin-bottom: 16px; line-height: 1.4; }
-.push-action-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; }
+.greeting-role { font-weight: bold; color: var(--primary); }
+.greeting-name { text-align: right; font-weight: bold; color: var(--text-sub); }
+.modal-body-p { padding-top: 12px; font-size: 0.9rem; }
+.desc-text { color: var(--text-sub); font-size: 0.75rem; margin-top: 6px; margin-bottom: 16px; }
+.push-action-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
 
-/* 📄 ページ制御用トグル（必須） */
 .app-page { display: none; }
 .app-page.active { display: block; }
