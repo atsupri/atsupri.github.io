@@ -11,8 +11,6 @@ const MAP_IMAGES = {
 };
 
 // 🛍️ 2. 出店（クラス・部活）データ
-// 💡 画像を表示するために、新しく "location" と "image" の設定項目を追加しました！
-// 画像ファイル（例: waffle.pngなど）を用意して書き換えてください。指定がない場合はデフォルトのNO IMAGEになります。
 const shopData = [
     { id: 1, floor: '1F', location: '商業教育棟1階', title: '3-7：マーケティング部', genre: '展示', x: 120, y: 150, image: 'waffle.png', menu: '部活で開発した商品の販売と活動報告を行います！' },
     { id: 2, floor: '1F', location: 'A棟1階', title: '3-2：人形浄瑠璃部', genre: '展示', x: 380, y: 340, image: '', menu: '伝統ある人形浄瑠璃の公演と、人形の展示を行っています。' },
@@ -49,7 +47,7 @@ const greetingData = [
 
 
 // ========================================================
-// ★★★ システム処理エリア（ポップアップデザイン最適化版） ★★★
+// ★★★ システム処理エリア ★★★
 // ========================================================
 
 let currentFloor = '1F';
@@ -82,7 +80,10 @@ function initImageMap() {
         maxBounds: MAP_BOUNDS,
         maxBoundsViscosity: 1.0,
         attributionControl: false,
-        zoomSnap: 0.1
+        zoomSnap: 0.1,
+        // 💡 吹き出しが画面外に隠れないよう自動で動く設定（オートパン）を有効化
+        autoPan: true,
+        autoPanPadding: L.point(20, 20)
     });
 
     updateMapFloorImage();
@@ -119,10 +120,19 @@ function switchPage(pageId) {
     }
 }
 
+// 階層切り替え関数（プログラム側からボタンUIも連動して切り替えられるように強化）
 function switchFloor(floor) {
     currentFloor = floor;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    
+    // タブのactive状態を更新
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        if (b.innerText === floor || b.getAttribute('onclick')?.includes(`'${floor}'`)) {
+            b.classList.add('active');
+        } else {
+            b.classList.remove('active');
+        }
+    });
+
     document.getElementById('floor-title').innerText = `${floor}の出店一覧`;
     
     renderShops();
@@ -136,18 +146,16 @@ function switchDay(day) {
     renderTimeline();
 }
 
-// 📌 マップ上のピンをタップしたときの処理（理想画像に合わせました）
+// マップ上のピンと吹き出し生成
 function updateMapMarkers() {
     markersGroup.forEach(m => map.removeLayer(m));
     markersGroup = [];
 
     shopData.filter(s => s.floor === currentFloor).forEach(shop => {
-        // 画像があるかどうかの判定処理
         const imageHtml = shop.image 
             ? `<img src="${shop.image}" class="popup-img" alt="${shop.title}">`
             : `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e5e7eb;color:#9ca3af;font-size:0.7rem;font-weight:bold;">NO IMAGE</div>`;
 
-        // 理想のデザインを完全に再現するHTML構造
         const popupContent = `
             <div class="popup-location">${shop.location || (shop.floor + '棟')}</div>
             <div class="popup-title">${shop.title}</div>
@@ -156,8 +164,9 @@ function updateMapMarkers() {
             </div>
         `;
 
+        // 💡 autoPan: true を指定して端っこでも隠れないように制御
         const marker = L.marker([shop.y, shop.x]).addTo(map)
-            .bindPopup(popupContent, { maxWidth: 210, minWidth: 180 });
+            .bindPopup(popupContent, { maxWidth: 210, minWidth: 180, autoPan: true });
         markersGroup.push(marker);
     });
 
@@ -173,14 +182,21 @@ function updateMapMarkers() {
     });
 }
 
-function panToCoordinates(x, y, shopId) {
-    map.setView([y, x], 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+// 💡 違う階のお店が選ばれた時、自動でその階に変えてからピンへ移動させるジャンプ機能
+function panToCoordinates(x, y, shopId, targetFloor) {
+    if (currentFloor !== targetFloor) {
+        switchFloor(targetFloor);
+    }
     
     setTimeout(() => {
-        const detailDiv = document.getElementById(`details-${shopId}`);
-        if (detailDiv) { detailDiv.classList.add('open'); }
-    }, 300);
+        map.setView([y, x], 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        setTimeout(() => {
+            const detailDiv = document.getElementById(`details-${shopId}`);
+            if (detailDiv) { detailDiv.classList.add('open'); }
+        }, 300);
+    }, 100);
 }
 
 function openShopDetailFromMap(shopId) {
@@ -192,16 +208,21 @@ function openShopDetailFromMap(shopId) {
     }
 }
 
-// 出店リストの出力
+// 💡 改善：全階層からクロス検索できるようにロジックを修正
 function renderShops() {
     const container = document.getElementById('shop-list-container');
     container.innerHTML = '';
 
     const filtered = shopData.filter(shop => {
-        const matchesFloor = shop.floor === currentFloor;
         const matchesTag = selectedTag === 'すべて' || shop.genre === selectedTag;
         const matchesSearch = shop.title.includes(searchQuery) || shop.menu.includes(searchQuery);
-        return matchesFloor && matchesTag && matchesSearch;
+        
+        // 検索ワードが入っている場合は「全階層」からヒットさせる。空の時は「現在の階層」のみ表示
+        if (searchQuery.trim() !== '') {
+            return matchesTag && matchesSearch;
+        } else {
+            return shop.floor === currentFloor && matchesTag && matchesSearch;
+        }
     });
 
     if(filtered.length === 0) {
@@ -218,10 +239,10 @@ function renderShops() {
         card.className = 'shop-card-wrapper';
         card.innerHTML = `
             <div class="shop-card" onclick="toggleAccordion(${shop.id})">
-                <span class="shop-loc">${shop.floor}</span>
+                <span class="shop-loc" style="${shop.floor !== currentFloor ? 'background:#f3f4f6; color:#6b7280;' : ''}">${shop.floor}</span>
                 <div class="shop-title">
                     ${shop.title}
-                    <span class="shop-genre">🏷️ ${shop.genre}</span>
+                    <span class="shop-genre">🏷️ ${shop.genre} ${shop.floor !== currentFloor ? ' (別フロア)' : ''}</span>
                 </div>
                 <i class="fa-solid fa-chevron-down" style="color:#9ca3af;" id="arrow-${shop.id}"></i>
             </div>
@@ -233,8 +254,9 @@ function renderShops() {
                     <span class="menu-headline">📋 出店内容・メニュー</span>
                     <div class="menu-text">${shop.menu}</div>
                     <div class="card-actions">
-                        <button class="map-go-btn" onclick="panToCoordinates(${shop.x}, ${shop.y}, ${shop.id})">
-                            <i class="fa-solid fa-location-arrow"></i> マップで位置を確認
+                        <!-- 💡 別階層からのジャンプに対応できるよう引数に shop.floor を追加 -->
+                        <button class="map-go-btn" onclick="panToCoordinates(${shop.x}, ${shop.y}, ${shop.id}, '${shop.floor}')">
+                            <i class="fa-solid fa-location-arrow"></i> ${shop.floor}マップへ行く
                         </button>
                     </div>
                 </div>
@@ -260,6 +282,15 @@ function toggleAccordion(id) {
 
 function filterShops() {
     searchQuery = document.getElementById('search-box').value;
+    
+    // 検索中かどうかでタイトル表記を分かりやすく切り替える
+    const titleEl = document.getElementById('floor-title');
+    if (searchQuery.trim() !== '') {
+        titleEl.innerText = `🔍 全館からの検索結果`;
+    } else {
+        titleEl.innerText = `${currentFloor}の出店一覧`;
+    }
+    
     renderShops();
 }
 
