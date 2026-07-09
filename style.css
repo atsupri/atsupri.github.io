@@ -88,16 +88,61 @@ body {
 .admin-btn.delay { background: #eab308 !important; }
 .admin-btn.reset { background: #10b981 !important; }
 
-/* 🗺️ マップ表示システム（横長画像完全固定仕様） */
+/* 🗺️ マップ表示システム */
 #map {
     width: 100%;
     height: 380px;
-    background: #ffffff !important; /* 背景を白にして灰色化を完全防御 */
+    background: #ffffff !important;
     border-bottom: 1px solid var(--border);
 }
 .festival-map-image {
     object-fit: contain !important;
     transform-origin: center center;
+}
+
+/* 📌 Leafletポップアップの理想的デザインカスタマイズ（画像再現用） */
+.leaflet-popup-content-wrapper {
+    border-radius: 16px !important;
+    padding: 4px 6px !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+}
+.leaflet-popup-content {
+    margin: 12px 14px !important;
+    line-height: 1.3 !important;
+}
+/* ポップアップ内の閉じるボタンをすっきりさせる */
+.leaflet-popup-close-button {
+    top: 8px !important;
+    right: 8px !important;
+    font-size: 16px !important;
+    color: #6b7280 !important;
+}
+
+/* ポップアップ内の構造 */
+.popup-location {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #374151;
+    margin-bottom: 2px;
+}
+.popup-title {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #111827;
+    margin-bottom: 8px;
+}
+.popup-img-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #e5e7eb;
+    border: 1px solid #e5e7eb;
+}
+.popup-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 /* 🚻 トイレ・設備用カスタムピン */
@@ -135,7 +180,8 @@ body {
 .shop-details.open { display: grid; padding-top: 14px; }
 @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-.logo-dummy { width: 75px; height: 75px; background: #e5e7eb; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-align: center; border: 1px solid #d1d5db; line-height: 1.2; }
+.logo-dummy { width: 75px; height: 75px; background: #e5e7eb; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-align: center; border: 1px solid #d1d5db; line-height: 1.2; overflow: hidden; }
+.logo-dummy img { width: 100%; height: 100%; object-fit: cover; }
 .details-right { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
 .menu-headline { font-size: 0.75rem; font-weight: bold; color: var(--primary); margin-bottom: 4px; display: block; }
 .menu-text { font-size: 0.8rem; color: #374151; line-height: 1.45; margin-bottom: 8px; }
