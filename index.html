@@ -2,149 +2,149 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>厚木王子高校 第3回王華祭リアルタイムナビ</title>
-    
-    <!-- 外部CSSファイルの読み込み -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>王子高 文化祭アプリ</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome (アイコン用) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- カスタムCSS -->
     <link rel="stylesheet" href="style.css">
-    
-    <!-- Leaflet (マップ用ライブラリ) の読み込み -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <!-- FontAwesome (アイコン用) の読み込み -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-    <header id="app-header">厚木王子高校 第3回王華祭ナビ</header>
-
-    <!-- 🚨 上部通知・アラートバー -->
-    <div class="alert-bar" id="global-alert">
-        <span id="alert-message">【通知】ステージイベントに変更があります。</span>
-        <button class="alert-close-btn" onclick="closeAlertBar()">閉じる</button>
-    </div>
-
-    <!-- 📱 ページ切り替えタブ -->
-    <div class="page-tabs">
-        <button class="page-tab-btn active" onclick="switchPage('map-page')">
-            <i class="fa-solid fa-map-location-dot"></i> マップ
-        </button>
-        <button class="page-tab-btn" onclick="switchPage('timetable-page')">
-            <i class="fa-solid fa-clock"></i> 時程・遅延
-        </button>
-    </div>
-
-    <!-- 🗺️ ページ1：マップ & 出店情報 -->
-    <div id="map-page" class="app-page active">
-        <!-- マップ配置エリア -->
-        <div id="map"></div>
-
-        <!-- 階層切り替えタブ（1F〜4Fのみ） -->
-        <div class="floor-tabs">
-            <button class="tab-btn active" onclick="switchFloor('1F')">1階</button>
-            <button class="tab-btn" onclick="switchFloor('2F')">2階</button>
-            <button class="tab-btn" onclick="switchFloor('3F')">3階</button>
-            <button class="tab-btn" onclick="switchFloor('4F')">4階</button>
+    <!-- ⚠️ グローバル遅延アラートバー -->
+    <div id="global-alert" class="alert-bar" style="display: none;">
+        <div class="alert-content">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="alert-message">ステージ進行に遅れが出ています。</span>
         </div>
+        <button class="alert-close-btn" onclick="closeAlertBar()">&times;</button>
+    </div>
 
-        <div class="content">
-            <div class="search-container">
-                <input type="text" id="search-box" class="search-input" placeholder="出店名・メニューで検索..." oninput="filterShops()">
+    <!-- 📱 ヘッダーナビゲーション -->
+    <header class="app-header">
+        <button class="menu-toggle-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="app-title">王子高 文化祭案内</h1>
+        <div style="width: 40px;"></div> <!-- バランス用のダミー空間 -->
+    </header>
+
+    <!-- 📂 ドロワーメニュー＆サイドバー -->
+    <div id="menu-overlay" class="menu-overlay" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="app-sidebar">
+        <div class="sidebar-header">
+            <h2>メニュー一覧</h2>
+            <button class="sidebar-close-btn" onclick="toggleSidebar()">&times;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <button onclick="openModal('modal-notice')"><i class="fa-solid fa-bullhorn"></i> 重要なお知らせ</button>
+            <button onclick="openModal('modal-greeting')"><i class="fa-solid fa-comment-dots"></i> 開催のご挨拶</button>
+            <button onclick="openModal('modal-push')"><i class="fa-solid fa-bell"></i> プッシュ通知設定</button>
+            
+            <div class="sidebar-divider">🛠️ 管理者シミュレーター</div>
+            <div class="admin-panel">
+                <label for="admin-target-select">対象ステージ:</label>
+                <select id="admin-target-select"></select>
+                <div class="admin-buttons">
+                    <button class="admin-btn delay" onclick="simulateDelay(15)">15分遅延</button>
+                    <button class="admin-btn delay" onclick="simulateDelay(30)">30分遅延</button>
+                    <button class="admin-btn reset" onclick="simulateDelay(0)">通常通りに戻す</button>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- 📦 メインコンテンツエリア -->
+    <main class="app-main">
+
+        <!-- 🗺️ ページ1：マップ＆出店一覧 -->
+        <section id="map-page" class="app-page active">
+            <!-- 階層切り替え用タブ -->
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchFloor('1F')">1階</button>
+                <button class="tab-btn" onclick="switchFloor('2F')">2階</button>
+                <button class="tab-btn" onclick="switchFloor('3F')">3階</button>
+                <button class="tab-btn" onclick="switchFloor('4F')">4階</button>
+            </div>
+
+            <!-- Leafletマップ土台 -->
+            <div id="map"></div>
+
+            <!-- 出店検索・フィルターエリア -->
+            <div class="search-filter-section">
+                <div class="search-bar-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-box" placeholder="クラス名、出し物で検索..." oninput=filterShops()>
+                </div>
                 <div class="tag-container">
-                    <button class="tag-btn active" onclick="filterTag('すべて', this)">すべて</button>
-                    <button class="tag-btn" onclick="filterTag('食品', this)">食品</button>
-                    <button class="tag-btn" onclick="filterTag('アトラクション', this)">体験</button>
-                    <button class="tag-btn" onclick="filterTag('展示', this)">展示</button>
+                    <button class="tag-btn active" onclick="filterTag('すべて', this)">全て</button>
+                    <button class="tag-btn" onclick="filterTag('食品', this)">🍛 食品販売</button>
+                    <button class="tag-btn" onclick="filterTag('展示', this)">🎨 展示・部活</button>
+                    <button class="tag-btn" onclick="filterTag('アトラクション', this)">🎮 体験・催し</button>
                 </div>
             </div>
 
-            <h3 id="floor-title">1階の出店一覧</h3>
-            <div class="shop-list" id="shop-list-container">
-                <!-- JavaScriptで自動生成 -->
+            <!-- 出店アコーディオンリスト -->
+            <h3 id="floor-title" class="section-title">1Fの出店一覧</h3>
+            <div id="shop-list-container" class="shop-list"></div>
+        </section>
+
+        <!-- ⏱️ ページ2：タイムライン（ステージスケジュール） -->
+        <section id="timeline-page" class="app-page">
+            <div class="day-selector">
+                <button id="day1-btn" class="day-btn active" onclick="switchDay(1)">1日目 (通常開催)</button>
+                <button id="day2-btn" class="day-btn" onclick="switchDay(2)">2日目 (一般公開)</button>
+            </div>
+            <div class="timeline-wrapper">
+                <div id="timeline-container"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 📌 フッター固定ナビゲーションタブ -->
+    <footer class="app-footer">
+        <button class="page-tab-btn active" onclick="switchPage('map-page')">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>校内マップ</span>
+        </button>
+        <button class="page-tab-btn" onclick="switchPage('timeline-page')">
+            <i class="fa-solid fa-clock"></i>
+            <span>タイムライン</span>
+        </button>
+    </footer>
+
+    <!-- 🖼️ 各種モーダルウィンドウ群 -->
+    <div id="modal-notice" class="modal" onclick="closeModalOnOverlay(event, 'modal-notice')">
+        <div class="modal-content">
+            <div class="modal-header"><h3>📢 重要なお知らせ</h3><button onclick="closeModal('modal-notice')">&times;</button></div>
+            <ul id="notice-list-container" class="modal-body-list"></ul>
+        </div>
+    </div>
+
+    <div id="modal-greeting" class="modal" onclick="closeModalOnOverlay(event, 'modal-greeting')">
+        <div class="modal-content">
+            <div class="modal-header"><h3>🤝 開催のご挨拶</h3><button onclick="closeModal('modal-greeting')">&times;</button></div>
+            <div id="greeting-list-container" class="modal-body-text"></div>
+        </div>
+    </div>
+
+    <div id="modal-push" class="modal" onclick="closeModalOnOverlay(event, 'modal-push')">
+        <div class="modal-content">
+            <div class="modal-header"><h3>🔔 通知設定</h3><button onclick="closeModal('modal-push')">&times;</button></div>
+            <div class="modal-body-p">
+                <p>現在のステータス: <b id="push-status-text">未確認</b></p>
+                <p class="desc-text">通知を許可すると、ステージの遅延情報や緊急アナウンスがリアルタイムで画面に届くようになります。</p>
+                <button id="push-request-btn" class="push-action-btn" onclick="requestNotificationPermission()">通知を有効にする</button>
             </div>
         </div>
     </div>
 
-    <!-- ⏱️ ページ2：タイムライン -->
-    <div id="timetable-page" class="app-page">
-        <div class="content">
-            <h3>タイムライン（ステージ）</h3>
-            <div class="timeline-tabs">
-                <button class="time-tab-btn active" id="day1-btn" onclick="switchDay(1)">1日目</button>
-                <button class="time-tab-btn" id="day2-btn" onclick="switchDay(2)">2日目</button>
-            </div>
-            <div class="timeline" id="timeline-container">
-                <!-- JavaScriptで自動生成 -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 🍔 フローティングメニューボタン -->
-    <button class="menu-trigger" onclick="toggleSidebar()">
-        <i class="fa-solid fa-bars"></i>
-    </button>
-    <div class="menu-overlay" id="menu-overlay" onclick="toggleSidebar()"></div>
-
-    <!-- 📂 サイドバーメニュー -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-title">メニュー</div>
-        <a class="menu-link" onclick="openModal('notice-modal')"><i class="fa-solid fa-bullhorn"></i> お知らせ</a>
-        <a class="menu-link" onclick="openModal('greeting-modal')"><i class="fa-solid fa-user-tie"></i> ご挨拶</a>
-        <a class="menu-link" onclick="openModal('push-modal')"><i class="fa-solid fa-bell"></i> プッシュ通知の設定</a>
-        
-        <!-- ⚙️ 運営テスト用ツール -->
-        <div class="admin-link menu-link" style="text-align:center; font-size:0.8rem;">⚙️ 運営テスト用ツール</div>
-        <div class="admin-tool-box">
-            <select id="admin-target-select" class="admin-select">
-                <!-- JavaScriptで自動生成 -->
-            </select>
-            <div class="admin-btn-group">
-                <button class="admin-btn" style="background:#ef4444; color:white;" onclick="simulateDelay(10)">10分遅延</button>
-                <button class="admin-btn" style="background:#2563eb; color:white;" onclick="simulateDelay(0)">通常通り</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🔔 モーダル1：プッシュ通知設定 -->
-    <div class="modal-overlay" id="push-modal" onclick="closeModalOnOverlay(event, 'push-modal')">
-        <div class="modal-box">
-            <div class="modal-title">プッシュ通知の設定</div>
-            <div class="notification-status-box">
-                現在の設定状況:<br>
-                <span id="push-status-text" style="color: #ef4444; font-size: 1.1rem;">未設定</span>
-                <button class="notification-btn" id="push-request-btn" onclick="requestNotificationPermission()">通知を有効にする</button>
-            </div>
-            <p style="font-size:0.8rem; color:#666; font-weight:bold; line-height:1.4;">
-                ※GitHub Pages(HTTPS)にアップロードすると、スマホやPCの画面外に届く通知（Notification API）が機能します。
-            </p>
-            <button class="modal-close-btn" onclick="closeModal('push-modal')">閉じる</button>
-        </div>
-    </div>
-
-    <!-- 📢 モーダル2：お知らせ -->
-    <div class="modal-overlay" id="notice-modal" onclick="closeModalOnOverlay(event, 'notice-modal')">
-        <div class="modal-box">
-            <div class="modal-title">校内総合案内</div>
-            <ul class="notice-list" id="notice-list-container">
-                <!-- JavaScriptで自動挿入 -->
-            </ul>
-            <button class="modal-close-btn" onclick="closeModal('notice-modal')">閉じる</button>
-        </div>
-    </div>
-
-    <!-- 🤝 モーダル3：ご挨拶 -->
-    <div class="modal-overlay" id="greeting-modal" onclick="closeModalOnOverlay(event, 'greeting-modal')">
-        <div class="modal-box">
-            <div class="modal-title">開催のご挨拶</div>
-            <div id="greeting-list-container">
-                <!-- JavaScriptで自動挿入 -->
-            </div>
-            <button class="modal-close-btn" onclick="closeModal('greeting-modal')">閉じる</button>
-        </div>
-    </div>
-
-    <!-- 外部JavaScriptファイルの読み込み -->
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- カスタムJS -->
     <script src="script.js"></script>
 </body>
 </html>
