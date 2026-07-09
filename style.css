@@ -1,200 +1,157 @@
-:root {
-    --primary: #1e3a8a;
-    --primary-light: #eff6ff;
-    --accent: #f59e0b;
-    --text-main: #1f2937;
-    --text-sub: #6b7280;
-    --bg-light: #f9fafb;
-    --border: #e5e7eb;
-}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>王子高 文化祭アプリ</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome (アイコン用) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- カスタムCSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    -webkit-tap-highlight-color: transparent;
-}
+    <!-- ⚠️ グローバル遅延アラートバー -->
+    <div id="global-alert" class="alert-bar" style="display: none;">
+        <div class="alert-content">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="alert-message">ステージ進行に遅れが出ています。</span>
+        </div>
+        <button class="alert-close-btn" onclick="closeAlertBar()">&times;</button>
+    </div>
 
-body {
-    background-color: var(--bg-light);
-    color: var(--text-main);
-    overflow-x: hidden;
-    padding-top: 56px;
-    padding-bottom: 65px;
-}
+    <!-- 📱 ヘッダーナビゲーション -->
+    <header class="app-header">
+        <button class="menu-toggle-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="app-title">王子高 文化祭案内</h1>
+        <div style="width: 40px;"></div>
+    </header>
 
-/* ⚠️ 遅延警告バー */
-.alert-bar {
-    position: fixed;
-    top: 56px;
-    left: 0;
-    width: 100%;
-    background-color: #fef2f2;
-    border-bottom: 2px solid #fee2e2;
-    color: #991b1b;
-    padding: 10px 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 999;
-    font-size: 0.85rem;
-    font-weight: bold;
-}
-.alert-content i { margin-right: 8px; color: #dc2626; }
-.alert-close-btn { background: none; border: none; font-size: 1.2rem; color: #991b1b; cursor: pointer; }
+    <!-- 📂 ドロワーメニュー＆サイドバー（全館検索エリア） -->
+    <div id="menu-overlay" class="menu-overlay" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="app-sidebar">
+        <div class="sidebar-header">
+            <h2>メニュー & 全館検索</h2>
+            <button class="sidebar-close-btn" onclick="toggleSidebar()">&times;</button>
+        </div>
+        
+        <!-- 🔍 サイドバー内：全館検索エリア -->
+        <div class="sidebar-search-section">
+            <div class="search-bar-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="sidebar-search-box" placeholder="全階層からお店を検索..." oninput="filterSidebarShops()">
+            </div>
+            <div id="sidebar-search-results" class="sidebar-results-list"></div>
+        </div>
 
-/* 📱 アプリヘッダー */
-.app-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 56px;
-    background-color: var(--primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    z-index: 1000;
-}
-.app-title { font-size: 1.15rem; font-weight: bold; letter-spacing: 0.05em; }
-.menu-toggle-btn { background: none; border: none; color: white; font-size: 1.25rem; cursor: pointer; width: 40px; height: 40px; }
+        <nav class="sidebar-nav">
+            <div class="sidebar-divider">メニュー</div>
+            <button onclick="openModal('modal-notice')"><i class="fa-solid fa-bullhorn"></i> 重要なお知らせ</button>
+            <button onclick="openModal('modal-greeting')"><i class="fa-solid fa-comment-dots"></i> 開催のご挨拶</button>
+            <button onclick="openModal('modal-push')"><i class="fa-solid fa-bell"></i> プッシュ通知設定</button>
+            
+            <div class="sidebar-divider">🛠️ 管理者シミュレーター</div>
+            <div class="admin-panel">
+                <label for="admin-target-select">対象ステージ:</label>
+                <select id="admin-target-select"></select>
+                <div class="admin-buttons">
+                    <button class="admin-btn delay" onclick="simulateDelay(15)">15分遅延</button>
+                    <button class="admin-btn delay" onclick="simulateDelay(30)">30分遅延</button>
+                    <button class="admin-btn reset" onclick="simulateDelay(0)">通常通りに戻す</button>
+                </div>
+            </div>
+        </nav>
+    </aside>
 
-/* 📂 ドロワーサイドバー（検索対応カスタム） */
-.menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1001; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-.menu-overlay.show { opacity: 1; pointer-events: auto; }
-.app-sidebar { position: fixed; top: 0; left: -300px; width: 300px; height: 100%; background: white; z-index: 1002; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 4px 0 10px rgba(0,0,0,0.1); padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
-.app-sidebar.open { left: 0; }
-.sidebar-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
-.sidebar-header h2 { font-size: 1.05rem; color: var(--primary); }
-.sidebar-close-btn { background: none; border: none; font-size: 1.5rem; color: var(--text-sub); cursor: pointer; }
+    <!-- 📦 メインコンテンツエリア -->
+    <main class="app-main">
 
-/* 🔍 サイドバー内検索デザイン */
-.sidebar-search-section { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 10px; }
-.search-bar-wrapper { position: relative; }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 0.9rem; }
-#sidebar-search-box { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; background: #f3f4f6; outline: none; }
-#sidebar-search-box:focus { background: white; border-color: var(--primary); }
-.sidebar-results-list { max-height: 220px; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+        <!-- 🗺️ ページ1：マップ＆出店一覧 -->
+        <section id="map-page" class="app-page active">
+            <!-- 階層切り替え用タブ -->
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="switchFloor('1F')">1階</button>
+                <button class="tab-btn" onclick="switchFloor('2F')">2階</button>
+                <button class="tab-btn" onclick="switchFloor('3F')">3階</button>
+                <button class="tab-btn" onclick="switchFloor('4F')">4階</button>
+            </div>
 
-/* サイドバー内検索結果の個別カード */
-.sidebar-result-item { background: #f9fafb; border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left; transition: background 0.2s; }
-.sidebar-result-item:active { background: var(--primary-light); }
-.sidebar-result-floor { font-size: 0.65rem; font-weight: bold; background: #e0f2fe; color: #0369a1; padding: 2px 4px; border-radius: 3px; margin-right: 6px; }
-.sidebar-result-title { font-size: 0.8rem; font-weight: bold; color: var(--text-main); }
-.sidebar-result-menu { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            <!-- Leafletマップ土台 -->
+            <div id="map"></div>
 
-.sidebar-nav button { width: 100%; background: none; border: none; text-align: left; padding: 10px 12px; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 12px; border-radius: 6px; cursor: pointer; color: var(--text-main); }
-.sidebar-nav button:active { background: var(--primary-light); color: var(--primary); }
-.sidebar-divider { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); margin: 14px 0 6px 4px; }
+            <!-- ジャンルフィルター -->
+            <div class="filter-section">
+                <div class="tag-container">
+                    <button class="tag-btn active" onclick="filterTag('すべて', this)">全て</button>
+                    <button class="tag-btn" onclick="filterTag('食品', this)">🍛 食品販売</button>
+                    <button class="tag-btn" onclick="filterTag('展示', this)">🎨 展示・部活</button>
+                    <button class="tag-btn" onclick="filterTag('アトラクション', this)">🎮 体験・催し</button>
+                </div>
+            </div>
 
-/* 🛠️ 管理者パネル */
-.admin-panel { background: #f3f4f6; border: 1px solid var(--border); padding: 10px; border-radius: 8px; font-size: 0.8rem; }
-.admin-panel label { font-weight: bold; display: block; margin-bottom: 4px; }
-.admin-panel select { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #d1d5db; margin-bottom: 8px; }
-.admin-buttons { display: flex; flex-direction: column; gap: 4px; }
-.admin-btn { width: 100%; border: none; padding: 8px; border-radius: 4px; font-weight: bold; text-align: center !important; justify-content: center !important; color: white !important; cursor: pointer; }
-.admin-btn.delay { background: #eab308 !important; }
-.admin-btn.reset { background: #10b981 !important; }
+            <!-- 出店アコーディオンリスト -->
+            <h3 id="floor-title" class="section-title">1Fの出店一覧</h3>
+            <div id="shop-list-container" class="shop-list"></div>
+        </section>
 
-/* 🗺️ マップ表示システム */
-#map {
-    width: 100%;
-    height: 380px;
-    background: #ffffff !important;
-    border-bottom: 1px solid var(--border);
-}
-.festival-map-image { object-fit: contain !important; }
+        <!-- ⏱️ ページ2：タイムライン -->
+        <section id="timeline-page" class="app-page">
+            <div class="day-selector">
+                <button id="day1-btn" class="day-btn active" onclick="switchDay(1)">1日目 (通常開催)</button>
+                <button id="day2-btn" class="day-btn" onclick="switchDay(2)">2日目 (一般公開)</button>
+            </div>
+            <div class="timeline-wrapper">
+                <div id="timeline-container"></div>
+            </div>
+        </section>
 
-/* 📌 Leafletポップアップの再現用デザイン */
-.leaflet-popup-content-wrapper {
-    border-radius: 16px !important;
-    padding: 4px 6px !important;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
-}
-.leaflet-popup-content { margin: 12px 14px !important; line-height: 1.3 !important; }
-.leaflet-popup-close-button { top: 8px !important; right: 8px !important; font-size: 16px !important; color: #6b7280 !important; }
-.popup-location { font-size: 0.85rem; font-weight: bold; color: #374151; margin-bottom: 2px; }
-.popup-title { font-size: 0.95rem; font-weight: bold; color: #111827; margin-bottom: 8px; }
-.popup-img-wrapper { width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #e5e7eb; border: 1px solid #e5e7eb; }
-.popup-img { width: 100%; height: 100%; object-fit: cover; }
+    </main>
 
-/* 🚻 カスタムピン */
-.custom-toilet-icon { background: none; border: none; }
-.custom-toilet-icon-inner { background: white; border: 2px solid #3b82f6; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+    <!-- 📌 フッター固定ナビゲーションタブ -->
+    <footer class="app-footer">
+        <button class="page-tab-btn active" onclick="switchPage('map-page')">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>校内マップ</span>
+        </button>
+        <button class="page-tab-btn" onclick="switchPage('timeline-page')">
+            <i class="fa-solid fa-clock"></i>
+            <span>タイムライン</span>
+        </button>
+    </footer>
 
-/* 階層切り替えタブ */
-.tab-container { display: flex; background: white; padding: 6px; gap: 6px; }
-.tab-btn { flex: 1; border: none; background: #f3f4f6; padding: 10px 0; font-size: 0.85rem; font-weight: bold; border-radius: 6px; color: var(--text-sub); cursor: pointer; }
-.tab-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 6px rgba(30,58,138,0.2); }
+    <!-- 各種モーダル群 -->
+    <div id="modal-notice" class="modal" onclick="closeModalOnOverlay(event, 'modal-notice')">
+        <div class="modal-content">
+            <div class="modal-header"><h3>📢 重要なお知らせ</h3><button onclick="closeModal('modal-notice')">&times;</button></div>
+            <ul id="notice-list-container" class="modal-body-list"></ul>
+        </div>
+    </div>
 
-/* フィルターエリア（メイン画面） */
-.filter-section { padding: 12px 16px 4px; background: white; }
-.tag-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
-.tag-container::-webkit-scrollbar { display: none; }
-.tag-btn { shrink: 0; white-space: nowrap; border: 1px solid var(--border); background: white; padding: 6px 12px; font-size: 0.75rem; font-weight: bold; border-radius: 20px; color: var(--text-main); cursor: pointer; }
-.tag-btn.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+    <div id="modal-greeting" class="modal" onclick="closeModalOnOverlay(event, 'modal-greeting')">
+        <div class="modal-content">
+            <div class="modal-header"><h3>🤝 開催のご挨拶</h3><button onclick="closeModal('modal-greeting')">&times;</button></div>
+            <div id="greeting-list-container" class="modal-body-text"></div>
+        </div>
+    </div>
 
-/* 📋 出店カード一覧 */
-.section-title { font-size: 0.95rem; font-weight: bold; padding: 14px 16px 6px; color: var(--text-sub); }
-.shop-list { padding: 0 16px 16px; }
-.shop-card-wrapper { background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
-.shop-card { padding: 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-.shop-loc { background: #e0f2fe; color: #0369a1; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-right: 12px; shrink: 0; }
-.shop-title { flex: 1; font-weight: bold; font-size: 0.9rem; color: var(--text-main); display: flex; flex-direction: column; gap: 2px; }
-.shop-genre { font-size: 0.75rem; color: var(--text-sub); }
-.shop-card i { transition: transform 0.2s ease; }
+    <div id="modal-push" class="modal" onclick="closeModalOnOverlay(event, 'modal-push')">
+        <div class="modal-content">
+            <div class="modal-header"><h3>🔔 通知設定</h3><button onclick="closeModal('modal-push')">&times;</button></div>
+            <div class="modal-body-p">
+                <p>現在のステータス: <b id="push-status-text">未確認</b></p>
+                <p class="desc-text">通知を許可すると、ステージの遅延情報や緊急アナウンスがリアルタイムで画面に届くようになります。</p>
+                <button id="push-request-btn" class="push-action-btn" onclick="requestNotificationPermission()">通知を有効にする</button>
+            </div>
+        </div>
+    </div>
 
-/* アコーディオン展開パーツ */
-.shop-details { display: none; padding: 0 14px 14px; border-top: 1px dashed var(--border); background: #fafafa; grid-template-columns: 75px 1fr; gap: 12px; align-items: start; }
-.shop-details.open { display: grid; padding-top: 14px; }
-.logo-dummy { width: 75px; height: 75px; background: #e5e7eb; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; color: #9ca3af; text-align: center; border: 1px solid #d1d5db; overflow: hidden; }
-.logo-dummy img { width: 100%; height: 100%; object-fit: cover; }
-.details-right { display: flex; flex-direction: column; justify-content: space-between; height: 100%; }
-.menu-headline { font-size: 0.75rem; font-weight: bold; color: var(--primary); margin-bottom: 4px; display: block; }
-.menu-text { font-size: 0.8rem; color: #374151; line-height: 1.45; margin-bottom: 8px; }
-.card-actions { display: flex; gap: 6px; }
-.map-go-btn { background: var(--primary); color: white; border: none; padding: 6px 10px; font-size: 0.75rem; font-weight: bold; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-
-/* ⏱️ タイムライン */
-.day-selector { display: flex; background: white; border-bottom: 1px solid var(--border); padding: 8px 16px; gap: 8px; }
-.day-btn { flex: 1; border: 1px solid var(--border); background: white; padding: 8px 0; font-size: 0.85rem; font-weight: bold; border-radius: 6px; color: var(--text-main); cursor: pointer; }
-.day-btn.active { background: #374151; color: white; border-color: #374151; }
-.timeline-wrapper { padding: 20px 16px; }
-.time-slot { background: white; border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 14px; border-radius: 0 8px 8px 0; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-.time-slot.status-delayed { border-left-color: #eab308; background: #fffbeb; }
-.time-text { font-size: 0.75rem; font-weight: bold; color: var(--text-sub); display: block; margin-bottom: 2px; }
-.band-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; color: var(--text-main); }
-.band-status { font-size: 0.75rem; font-weight: bold; color: #10b981; }
-.band-status.delayed { color: #b45309; }
-.fav-btn { background: none; border: none; font-size: 1.35rem; color: #d1d5db; cursor: pointer; padding: 4px; }
-.fav-btn.active { color: #f59e0b; }
-
-/* 📌 フッター */
-.app-footer { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; border-top: 1px solid var(--border); display: flex; z-index: 1000; }
-.page-tab-btn { flex: 1; background: none; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-sub); font-size: 0.7rem; font-weight: 500; gap: 4px; }
-.page-tab-btn i { font-size: 1.2rem; }
-.page-tab-btn.active { color: var(--primary); font-weight: bold; }
-
-/* 🖼️ モーダル */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
-.modal.show { opacity: 1; pointer-events: auto; }
-.modal-content { background: white; border-radius: 12px; width: 100%; max-width: 400px; max-height: 80%; display: flex; flex-direction: column; padding: 20px; }
-.modal-header { padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.modal-header h3 { font-size: 1rem; color: var(--text-main); }
-.modal-header button { background: none; border: none; font-size: 1.5rem; color: var(--text-sub); cursor: pointer; }
-.modal-body-list { padding-top: 12px; overflow-y: auto; list-style-type: none; }
-.modal-body-list li { font-size: 0.85rem; font-weight: bold; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border); }
-.notice-sub { font-weight: normal; color: var(--text-sub); display: block; font-size: 0.75rem; margin-top: 2px; }
-.modal-body-text { padding-top: 12px; overflow-y: auto; font-size: 0.85rem; line-height: 1.5; }
-.greeting-section { margin-bottom: 14px; }
-.greeting-role { font-weight: bold; color: var(--primary); }
-.greeting-name { text-align: right; font-weight: bold; color: var(--text-sub); }
-.modal-body-p { padding-top: 12px; font-size: 0.9rem; }
-.desc-text { color: var(--text-sub); font-size: 0.75rem; margin-top: 6px; margin-bottom: 16px; }
-.push-action-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; }
-
-.app-page { display: none; }
-.app-page.active { display: block; }
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- カスタムJS -->
+    <script src="script.js"></script>
+</body>
+</html>
