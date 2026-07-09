@@ -28,17 +28,29 @@
             <i class="fa-solid fa-bars"></i>
         </button>
         <h1 class="app-title">王子高 文化祭案内</h1>
-        <div style="width: 40px;"></div> <!-- バランス用のダミー空間 -->
+        <div style="width: 40px;"></div>
     </header>
 
-    <!-- 📂 ドロワーメニュー＆サイドバー -->
+    <!-- 📂 ドロワーメニュー＆サイドバー（検索機能をここに集約！） -->
     <div id="menu-overlay" class="menu-overlay" onclick="toggleSidebar()"></div>
     <aside id="sidebar" class="app-sidebar">
         <div class="sidebar-header">
-            <h2>メニュー一覧</h2>
+            <h2>メニュー & 全館検索</h2>
             <button class="sidebar-close-btn" onclick="toggleSidebar()">&times;</button>
         </div>
+        
+        <!-- 🔍 サイドバー内：全館検索エリア -->
+        <div class="sidebar-search-section">
+            <div class="search-bar-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="sidebar-search-box" placeholder="全階層からお店を検索..." oninput="filterSidebarShops()">
+            </div>
+            <!-- 検索結果がここにリアルタイム表示される -->
+            <div id="sidebar-search-results" class="sidebar-results-list"></div>
+        </div>
+
         <nav class="sidebar-nav">
+            <div class="sidebar-divider">メニュー</div>
             <button onclick="openModal('modal-notice')"><i class="fa-solid fa-bullhorn"></i> 重要なお知らせ</button>
             <button onclick="openModal('modal-greeting')"><i class="fa-solid fa-comment-dots"></i> 開催のご挨拶</button>
             <button onclick="openModal('modal-push')"><i class="fa-solid fa-bell"></i> プッシュ通知設定</button>
@@ -72,12 +84,8 @@
             <!-- Leafletマップ土台 -->
             <div id="map"></div>
 
-            <!-- 出店検索・フィルターエリア -->
-            <div class="search-filter-section">
-                <div class="search-bar-wrapper">
-                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                    <input type="text" id="search-box" placeholder="クラス名、出し物で検索..." oninput="filterShops()">
-                </div>
+            <!-- ジャンルフィルター（メイン画面用） -->
+            <div class="filter-section">
                 <div class="tag-container">
                     <button class="tag-btn active" onclick="filterTag('すべて', this)">全て</button>
                     <button class="tag-btn" onclick="filterTag('食品', this)">🍛 食品販売</button>
@@ -86,12 +94,12 @@
                 </div>
             </div>
 
-            <!-- 出店アコーディオンリスト -->
+            <!-- 出店アコーディオンリスト（選んでいる階のものだけスッキリ表示） -->
             <h3 id="floor-title" class="section-title">1Fの出店一覧</h3>
             <div id="shop-list-container" class="shop-list"></div>
         </section>
 
-        <!-- ⏱️ ページ2：タイムライン（ステージスケジュール） -->
+        <!-- ⏱️ ページ2：タイムライン -->
         <section id="timeline-page" class="app-page">
             <div class="day-selector">
                 <button id="day1-btn" class="day-btn active" onclick="switchDay(1)">1日目 (通常開催)</button>
@@ -116,7 +124,7 @@
         </button>
     </footer>
 
-    <!-- 🖼️ 各種モーダルウィンドウ群 -->
+    <!-- 各種モーダル群 -->
     <div id="modal-notice" class="modal" onclick="closeModalOnOverlay(event, 'modal-notice')">
         <div class="modal-content">
             <div class="modal-header"><h3>📢 重要なお知らせ</h3><button onclick="closeModal('modal-notice')">&times;</button></div>
