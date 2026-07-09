@@ -11,17 +11,14 @@ const MAP_IMAGES = {
 };
 
 // 🛍️ 2. 出店（クラス・部活）データ
-// 💡 【座標(x, y)のヒント】：今回の横長マップでは、以下を基準にするとピンが置きやすいです。
-// 左端(商業教育棟)あたり ➡ x: 100
-// 真ん中(A棟・C棟)あたり ➡ x: 450
-// 右端(B棟・体育館)あたり ➡ x: 800
-// 下側 ➡ y: 50  /  真ん中 ➡ y: 200  /  上側 ➡ y: 350
+// 💡 画像を表示するために、新しく "location" と "image" の設定項目を追加しました！
+// 画像ファイル（例: waffle.pngなど）を用意して書き換えてください。指定がない場合はデフォルトのNO IMAGEになります。
 const shopData = [
-    { id: 1, floor: '1F', title: '3-7：マーケティング部', genre: '展示', x: 120, y: 150, menu: '部活で開発した商品の販売と活動報告を行います！' },
-    { id: 2, floor: '1F', title: '3-2：人形浄瑠璃部', genre: '展示', x: 380, y: 340, menu: '伝統ある人形浄瑠璃の公演と、人形の展示を行っています。' },
-    { id: 3, floor: '2F', title: '2-6：マーケティング部', genre: '食品', x: 110, y: 320, menu: '美味しいお菓子や特産品を販売しています！' },
-    { id: 4, floor: '3F', title: '1-1：写真部', genre: '展示', x: 360, y: 340, menu: '部員が撮影した渾身の一枚を展示中。お気に入りの作品に投票してください！' },
-    { id: 5, floor: '4F', title: '軽音楽部', genre: 'アトラクション', x: 280, y: 340, menu: '4階A棟端の部室にて、アコースティックミニライブを開催中！' }
+    { id: 1, floor: '1F', location: '商業教育棟1階', title: '3-7：マーケティング部', genre: '展示', x: 120, y: 150, image: 'waffle.png', menu: '部活で開発した商品の販売と活動報告を行います！' },
+    { id: 2, floor: '1F', location: 'A棟1階', title: '3-2：人形浄瑠璃部', genre: '展示', x: 380, y: 340, image: '', menu: '伝統ある人形浄瑠璃の公演と、人形の展示を行っています。' },
+    { id: 3, floor: '2F', location: 'A棟2階', title: '2-7組：喫茶 美和の館', genre: '食品', x: 410, y: 330, image: 'waffle.png', menu: '美味しいワッフルとお飲み物を用意してお待ちしております！' },
+    { id: 4, floor: '3F', location: 'A棟3階', title: '1-1：写真部', genre: '展示', x: 360, y: 340, image: '', menu: '部員が撮影した手作りの一枚を展示中。お気に入りの作品に投票してください！' },
+    { id: 5, floor: '4F', location: 'A棟4階', title: '軽音楽部', genre: 'アトラクション', x: 280, y: 340, image: '', menu: '4階A棟端の部室にて、アコースティックミニライブを開催中！' }
 ];
 
 // 🚻 3. トイレ・救護室などの設備データ
@@ -52,7 +49,7 @@ const greetingData = [
 
 
 // ========================================================
-// ★★★ システム処理エリア（横長マップ・領域固定対策済み） ★★★
+// ★★★ システム処理エリア（ポップアップデザイン最適化版） ★★★
 // ========================================================
 
 let currentFloor = '1F';
@@ -64,7 +61,6 @@ let currentImageLayer = null;
 let markersGroup = [];
 let favorites = JSON.parse(localStorage.getItem('festival_favs')) || [];
 
-// 🗺️ お送りいただいた画像の縦横比（約 900 × 410）に空間のサイズを最適化
 const MAP_WIDTH = 900;
 const MAP_HEIGHT = 410;
 const MAP_BOUNDS = [[0, 0], [MAP_HEIGHT, MAP_WIDTH]];
@@ -79,15 +75,14 @@ window.onload = function() {
 };
 
 function initImageMap() {
-    // 完全に枠外へはみ出さないように制限を設定
     map = L.map('map', {
         crs: L.CRS.Simple,
-        minZoom: -1,             // 画面に全体が収まる引きの限界
-        maxZoom: 1.5,            // 拡大の限界
-        maxBounds: MAP_BOUNDS,   // 【領域固定】画像のサイズぴったりにロック
-        maxBoundsViscosity: 1.0, // 【はみ出し防止】これ以上引っ張っても絶対にズレない
+        minZoom: -1,
+        maxZoom: 1.5,
+        maxBounds: MAP_BOUNDS,
+        maxBoundsViscosity: 1.0,
         attributionControl: false,
-        zoomSnap: 0.1            // ズームの滑らかさを調整
+        zoomSnap: 0.1
     });
 
     updateMapFloorImage();
@@ -99,21 +94,16 @@ function updateMapFloorImage() {
     }
     const imageUrl = MAP_IMAGES[currentFloor] || 'map1f.png';
 
-    // 横長画像として正しくマッピング
     currentImageLayer = L.imageOverlay(imageUrl, MAP_BOUNDS, {
         className: 'festival-map-image'
     }).addTo(map);
 
-    // 画面サイズが変わっても、常に画像全体がぴったり綺麗に収まる位置に自動リセット
     map.fitBounds(MAP_BOUNDS);
-    
-    // 現在のズーム位置より引けないように最小ズームを自動ロック（灰色になるのを防ぐ）
     map.setMinZoom(map.getBoundsZoom(MAP_BOUNDS));
 
     updateMapMarkers();
 }
 
-// ページ切り替え
 function switchPage(pageId) {
     document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.page-tab-btn').forEach(b => b.classList.remove('active'));
@@ -129,7 +119,6 @@ function switchPage(pageId) {
     }
 }
 
-// 階層切り替え
 function switchFloor(floor) {
     currentFloor = floor;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -140,7 +129,6 @@ function switchFloor(floor) {
     updateMapFloorImage();
 }
 
-// 日程切り替え
 function switchDay(day) {
     currentDay = day;
     document.getElementById('day1-btn').classList.toggle('active', day === 1);
@@ -148,14 +136,28 @@ function switchDay(day) {
     renderTimeline();
 }
 
-// マップ上のピン更新
+// 📌 マップ上のピンをタップしたときの処理（理想画像に合わせました）
 function updateMapMarkers() {
     markersGroup.forEach(m => map.removeLayer(m));
     markersGroup = [];
 
     shopData.filter(s => s.floor === currentFloor).forEach(shop => {
+        // 画像があるかどうかの判定処理
+        const imageHtml = shop.image 
+            ? `<img src="${shop.image}" class="popup-img" alt="${shop.title}">`
+            : `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e5e7eb;color:#9ca3af;font-size:0.7rem;font-weight:bold;">NO IMAGE</div>`;
+
+        // 理想のデザインを完全に再現するHTML構造
+        const popupContent = `
+            <div class="popup-location">${shop.location || (shop.floor + '棟')}</div>
+            <div class="popup-title">${shop.title}</div>
+            <div class="popup-img-wrapper" onclick="openShopDetailFromMap(${shop.id})">
+                ${imageHtml}
+            </div>
+        `;
+
         const marker = L.marker([shop.y, shop.x]).addTo(map)
-            .bindPopup(`<b>${shop.title}</b><br><span style="font-size:0.8rem;">${shop.genre}</span><br><button onclick="openShopDetailFromMap(${shop.id})" style="margin-top:5px; padding:2px 6px; font-size:0.75rem; background:#1e3a8a; color:white; border:none; border-radius:4px; cursor:pointer;">詳細を見る</button>`);
+            .bindPopup(popupContent, { maxWidth: 210, minWidth: 180 });
         markersGroup.push(marker);
     });
 
@@ -208,6 +210,10 @@ function renderShops() {
     }
 
     filtered.forEach(shop => {
+        const imageListHtml = shop.image 
+            ? `<img src="${shop.image}" alt="${shop.title}">`
+            : `NO IMAGE<br><span style="font-size:0.6rem;">文化祭</span>`;
+
         const card = document.createElement('div');
         card.className = 'shop-card-wrapper';
         card.innerHTML = `
@@ -221,7 +227,7 @@ function renderShops() {
             </div>
             <div class="shop-details" id="details-${shop.id}">
                 <div class="details-left">
-                    <div class="logo-dummy">NO IMAGE<br><span style="font-size:0.6rem;">文化祭</span></div>
+                    <div class="logo-dummy">${imageListHtml}</div>
                 </div>
                 <div class="details-right">
                     <span class="menu-headline">📋 出店内容・メニュー</span>
