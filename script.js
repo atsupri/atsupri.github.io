@@ -2,7 +2,6 @@
 // ★★★ データ編集エリア ★★★
 // ========================================================
 
-// 🖼️ 1. 階層ごとのマップ画像ファイル名
 const MAP_IMAGES = {
     '1F': 'map1f.png',
     '2F': 'map2f.png',
@@ -10,7 +9,6 @@ const MAP_IMAGES = {
     '4F': 'map4f.png'
 };
 
-// 🛍️ 2. 出店（クラス・部活）データ
 const shopData = [
     { id: 1, floor: '1F', location: '商業教育棟1階', title: '3-7：マーケティング部', genre: '展示', x: 120, y: 150, image: 'waffle.png', menu: '部活で開発した商品の販売と活動報告を行います！' },
     { id: 2, floor: '1F', location: 'A棟1階', title: '3-2：人形浄瑠璃部', genre: '展示', x: 380, y: 340, image: '', menu: '伝統ある人形浄瑠璃の公演と、人形の展示を行っています。' },
@@ -19,7 +17,6 @@ const shopData = [
     { id: 5, floor: '4F', location: 'A棟4階', title: '軽音楽部', genre: 'アトラクション', x: 280, y: 340, image: '', menu: '4階A棟端の部室にて、アコースティックミニライブを開催中！' }
 ];
 
-// 🚻 3. トイレ・救護室などの設備データ
 const facilityData = [
     { name: "1F 事務室・AED", floor: "1F", x: 360, y: 80, icon: "🚑" },
     { name: "2F トイレ", floor: "2F", x: 150, y: 220, icon: "🚻" },
@@ -27,20 +24,17 @@ const facilityData = [
     { name: "4F トイレ", floor: "4F", x: 150, y: 220, icon: "🚻" }
 ];
 
-// ⏱️ 4. 時程（タイムライン）データ
 const timelineData = [
     { id: 1, day: 1, time: "10:00 - 11:00", name: "吹奏楽部：オープニングアクト", delay: 0 },
     { id: 2, day: 1, time: "11:30 - 13:00", name: "軽音楽部：無敵ライブ", delay: 0 },
     { id: 3, day: 2, time: "13:00 - 14:00", name: "ダンス部：ファイナルステージ", delay: 0 }
 ];
 
-// 📢 5. お知らせデータ
 const noticeData = [
     { title: "熱中症にご注意ください", sub: "こまめな水分補給をお願いします。" },
     { title: "落とし物・迷子について", sub: "1階職員室前ロビーの本部までお越しください。" }
 ];
 
-// 🤝 6. ご挨拶データ
 const greetingData = [
     { role: "文化祭実行委員長より", name: "実行委員長", text: "第3回王子高文化祭へようこそ！心ゆくまでお楽しみください！" }
 ];
@@ -52,7 +46,6 @@ const greetingData = [
 
 let currentFloor = '1F';
 let currentDay = 1;
-let searchQuery = '';
 let selectedTag = 'すべて';
 let map;
 let currentImageLayer = null;
@@ -70,6 +63,7 @@ window.onload = function() {
     renderStaticModals();
     initAdminSelect();
     updateNotificationStatusDisplay();
+    filterSidebarShops(); // 初期状態で空検索リストを出しておく
 };
 
 function initImageMap() {
@@ -81,18 +75,16 @@ function initImageMap() {
         maxBoundsViscosity: 1.0,
         attributionControl: false,
         zoomSnap: 0.1,
-        // 💡 吹き出しが画面外に隠れないよう自動で動く設定（オートパン）を有効化
+        // 💡 吹き出しの自動調整は最低限残しつつ、勝手な大移動はさせない設定
         autoPan: true,
-        autoPanPadding: L.point(20, 20)
+        autoPanPadding: L.point(15, 15)
     });
 
     updateMapFloorImage();
 }
 
 function updateMapFloorImage() {
-    if (currentImageLayer) {
-        map.removeLayer(currentImageLayer);
-    }
+    if (currentImageLayer) { map.removeLayer(currentImageLayer); }
     const imageUrl = MAP_IMAGES[currentFloor] || 'map1f.png';
 
     currentImageLayer = L.imageOverlay(imageUrl, MAP_BOUNDS, {
@@ -120,11 +112,9 @@ function switchPage(pageId) {
     }
 }
 
-// 階層切り替え関数（プログラム側からボタンUIも連動して切り替えられるように強化）
 function switchFloor(floor) {
     currentFloor = floor;
     
-    // タブのactive状態を更新
     document.querySelectorAll('.tab-btn').forEach(b => {
         if (b.innerText === floor || b.getAttribute('onclick')?.includes(`'${floor}'`)) {
             b.classList.add('active');
@@ -146,7 +136,6 @@ function switchDay(day) {
     renderTimeline();
 }
 
-// マップ上のピンと吹き出し生成
 function updateMapMarkers() {
     markersGroup.forEach(m => map.removeLayer(m));
     markersGroup = [];
@@ -164,7 +153,6 @@ function updateMapMarkers() {
             </div>
         `;
 
-        // 💡 autoPan: true を指定して端っこでも隠れないように制御
         const marker = L.marker([shop.y, shop.x]).addTo(map)
             .bindPopup(popupContent, { maxWidth: 210, minWidth: 180, autoPan: true });
         markersGroup.push(marker);
@@ -182,20 +170,35 @@ function updateMapMarkers() {
     });
 }
 
-// 💡 違う階のお店が選ばれた時、自動でその階に変えてからピンへ移動させるジャンプ機能
-function panToCoordinates(x, y, shopId, targetFloor) {
+// 💡 改善：サイドバーの検索結果をクリックしたときの挙動
+function selectShopFromSidebar(x, y, shopId, targetFloor) {
+    // 1. まずドロワーメニュー（サイドバー）を閉じる
+    toggleSidebar();
+
+    // 2. もし違う階ならフロアを切り替え
     if (currentFloor !== targetFloor) {
         switchFloor(targetFloor);
     }
     
+    // 💡 すぐにセンター移動させず、少し余裕をもってからスクロール＆アコーディオン展開のみ実行
     setTimeout(() => {
-        map.setView([y, x], 1);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        setTimeout(() => {
-            const detailDiv = document.getElementById(`details-${shopId}`);
-            if (detailDiv) { detailDiv.classList.add('open'); }
-        }, 300);
+        const detailDiv = document.getElementById(`details-${shopId}`);
+        if (detailDiv) {
+            detailDiv.classList.add('open');
+            detailDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 250);
+}
+
+// メイン画面の「マップで位置を確認」用（センター強制移動をマイルドに修正）
+function panToCoordinates(x, y, shopId, targetFloor) {
+    if (currentFloor !== targetFloor) {
+        switchFloor(targetFloor);
+    }
+    setTimeout(() => {
+        // 強制setViewを廃止し、下部のアコーディオン表示に注力
+        const detailDiv = document.getElementById(`details-${shopId}`);
+        if (detailDiv) { detailDiv.classList.add('open'); }
     }, 100);
 }
 
@@ -208,25 +211,19 @@ function openShopDetailFromMap(shopId) {
     }
 }
 
-// 💡 改善：全階層からクロス検索できるようにロジックを修正
+// 💡 メイン画面側：選ばれている階＆選ばれているタグのみを常時「綺麗にスッキリ」表示する
 function renderShops() {
     const container = document.getElementById('shop-list-container');
     container.innerHTML = '';
 
     const filtered = shopData.filter(shop => {
+        const matchesFloor = shop.floor === currentFloor;
         const matchesTag = selectedTag === 'すべて' || shop.genre === selectedTag;
-        const matchesSearch = shop.title.includes(searchQuery) || shop.menu.includes(searchQuery);
-        
-        // 検索ワードが入っている場合は「全階層」からヒットさせる。空の時は「現在の階層」のみ表示
-        if (searchQuery.trim() !== '') {
-            return matchesTag && matchesSearch;
-        } else {
-            return shop.floor === currentFloor && matchesTag && matchesSearch;
-        }
+        return matchesFloor && matchesTag;
     });
 
     if(filtered.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#9ca3af; font-weight:bold; padding:20px;">該当する出店が見つかりません</p>';
+        container.innerHTML = '<p style="text-align:center; color:#9ca3af; font-weight:bold; padding:20px;">該当する出店がこの階にはありません</p>';
         return;
     }
 
@@ -239,10 +236,10 @@ function renderShops() {
         card.className = 'shop-card-wrapper';
         card.innerHTML = `
             <div class="shop-card" onclick="toggleAccordion(${shop.id})">
-                <span class="shop-loc" style="${shop.floor !== currentFloor ? 'background:#f3f4f6; color:#6b7280;' : ''}">${shop.floor}</span>
+                <span class="shop-loc">${shop.floor}</span>
                 <div class="shop-title">
                     ${shop.title}
-                    <span class="shop-genre">🏷️ ${shop.genre} ${shop.floor !== currentFloor ? ' (別フロア)' : ''}</span>
+                    <span class="shop-genre">🏷️ ${shop.genre}</span>
                 </div>
                 <i class="fa-solid fa-chevron-down" style="color:#9ca3af;" id="arrow-${shop.id}"></i>
             </div>
@@ -254,15 +251,49 @@ function renderShops() {
                     <span class="menu-headline">📋 出店内容・メニュー</span>
                     <div class="menu-text">${shop.menu}</div>
                     <div class="card-actions">
-                        <!-- 💡 別階層からのジャンプに対応できるよう引数に shop.floor を追加 -->
                         <button class="map-go-btn" onclick="panToCoordinates(${shop.x}, ${shop.y}, ${shop.id}, '${shop.floor}')">
-                            <i class="fa-solid fa-location-arrow"></i> ${shop.floor}マップへ行く
+                            <i class="fa-solid fa-location-arrow"></i> 表示を確定
                         </button>
                     </div>
                 </div>
             </div>
         `;
         container.appendChild(card);
+    });
+}
+
+// 💡 新設：サイドバー（ハンバーガーメニュー）内での全館リアルタイム検索処理
+function filterSidebarShops() {
+    const query = document.getElementById('sidebar-search-box').value.trim();
+    const resultsContainer = document.getElementById('sidebar-search-results');
+    resultsContainer.innerHTML = '';
+
+    if (query === '') {
+        resultsContainer.innerHTML = '<p style="font-size:0.75rem; color:#9ca3af; padding:4px;">店名やメニュー名で検索できます</p>';
+        return;
+    }
+
+    const matched = shopData.filter(shop => {
+        return shop.title.includes(query) || shop.menu.includes(query);
+    });
+
+    if (matched.length === 0) {
+        resultsContainer.innerHTML = '<p style="font-size:0.75rem; color:#ef4444; padding:4px;">見つかりませんでした</p>';
+        return;
+    }
+
+    matched.forEach(shop => {
+        const item = document.createElement('button');
+        item.className = 'sidebar-result-item';
+        item.onclick = () => selectShopFromSidebar(shop.x, shop.y, shop.id, shop.floor);
+        item.innerHTML = `
+            <div>
+                <span class="sidebar-result-floor">${shop.floor}</span>
+                <span class="sidebar-result-title">${shop.title}</span>
+            </div>
+            <div class="sidebar-result-menu">${shop.menu}</div>
+        `;
+        resultsContainer.appendChild(item);
     });
 }
 
@@ -280,20 +311,6 @@ function toggleAccordion(id) {
     }
 }
 
-function filterShops() {
-    searchQuery = document.getElementById('search-box').value;
-    
-    // 検索中かどうかでタイトル表記を分かりやすく切り替える
-    const titleEl = document.getElementById('floor-title');
-    if (searchQuery.trim() !== '') {
-        titleEl.innerText = `🔍 全館からの検索結果`;
-    } else {
-        titleEl.innerText = `${currentFloor}の出店一覧`;
-    }
-    
-    renderShops();
-}
-
 function filterTag(tag, element) {
     selectedTag = tag;
     document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
@@ -301,17 +318,14 @@ function filterTag(tag, element) {
     renderShops();
 }
 
-// タイムラインの出力
+// タイムライン以下の制御
 function renderTimeline() {
     const container = document.getElementById('timeline-container');
     container.innerHTML = '';
-
     const filtered = timelineData.filter(t => t.day === currentDay);
-
     filtered.forEach(slot => {
         const isFav = favorites.includes(slot.id);
         const isDelayed = slot.delay > 0;
-        
         const div = document.createElement('div');
         div.className = `time-slot ${isDelayed ? 'status-delayed' : ''}`;
         div.innerHTML = `
@@ -322,9 +336,7 @@ function renderTimeline() {
                     ${isDelayed ? `⚠️ ${slot.delay}分遅延（変更後 ${getDelayedTime(slot.time, slot.delay)}）` : '✅ 通常通り'}
                 </span>
             </div>
-            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${slot.id})">
-                ${isFav ? '★' : '☆'}
-            </button>
+            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite(${slot.id})">★</button>
         `;
         container.appendChild(div);
     });
@@ -335,138 +347,59 @@ function getDelayedTime(timeRangeStr, delayMinutes) {
         const startStr = timeRangeStr.split(' - ')[0];
         let [hours, minutes] = startStr.split(':').map(Number);
         minutes += delayMinutes;
-        if (minutes >= 60) {
-            hours += Math.floor(minutes / 60);
-            minutes = minutes % 60;
-        }
+        if (minutes >= 60) { hours += Math.floor(minutes / 60); minutes = minutes % 60; }
         return `${hours}:${String(minutes).padStart(2, '0')}～`;
     } catch(e) { return "時間変更あり"; }
 }
 
 function toggleFavorite(id) {
-    if (favorites.includes(id)) {
-        favorites = favorites.filter(fid => fid !== id);
-    } else {
-        favorites.push(id);
-    }
+    if (favorites.includes(id)) { favorites = favorites.filter(fid => fid !== id); } 
+    else { favorites.push(id); }
     localStorage.setItem('festival_favs', JSON.stringify(favorites));
     renderTimeline();
 }
 
 function renderStaticModals() {
-    const noticeContainer = document.getElementById('notice-list-container');
-    noticeContainer.innerHTML = noticeData.map(d => `
-        <li>${d.title}<span class="notice-sub">${d.sub}</span></li>
-    `).join('');
-
-    const greetingContainer = document.getElementById('greeting-list-container');
-    greetingContainer.innerHTML = greetingData.map(d => `
-        <div class="greeting-section">
-            <div class="greeting-role">${d.role}</div>
-            <p>${d.text}</p>
-            <div class="greeting-name">${d.name}</div>
-        </div>
-    `).join('');
+    document.getElementById('notice-list-container').innerHTML = noticeData.map(d => `<li>${d.title}<span class="notice-sub">${d.sub}</span></li>`).join('');
+    document.getElementById('greeting-list-container').innerHTML = greetingData.map(d => `<div class="greeting-section"><div class="greeting-role">${d.role}</div><p>${d.text}</p><div class="greeting-name">${d.name}</div></div>`).join('');
 }
 
 function initAdminSelect() {
-    const select = document.getElementById('admin-target-select');
-    select.innerHTML = timelineData.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+    document.getElementById('admin-target-select').innerHTML = timelineData.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
 }
 
-// 🔔 プッシュ通知制御
 function updateNotificationStatusDisplay() {
     const statusText = document.getElementById('push-status-text');
     const reqBtn = document.getElementById('push-request-btn');
-    
-    if (!("Notification" in window)) {
-        statusText.innerText = "通知非対応のブラウザです";
-        statusText.style.color = "#ef4444";
-        reqBtn.style.display = "none";
-        return;
-    }
-
-    if (Notification.permission === "granted") {
-        statusText.innerText = "許可済み";
-        statusText.style.color = "#10b981";
-        reqBtn.style.display = "none";
-    } else if (Notification.permission === "denied") {
-        statusText.innerText = "設定でブロックされています";
-        statusText.style.color = "#ef4444";
-        reqBtn.style.display = "none";
-    } else {
-        statusText.innerText = "未設定";
-        statusText.style.color = "#f59e0b";
-        reqBtn.style.display = "block";
-    }
+    if (!("Notification" in window)) { statusText.innerText = "非対応"; reqBtn.style.display = "none"; return; }
+    if (Notification.permission === "granted") { statusText.innerText = "許可済み"; reqBtn.style.display = "none"; } 
+    else { statusText.innerText = "未設定"; reqBtn.style.display = "block"; }
 }
 
 function requestNotificationPermission() {
     if (!("Notification" in window)) return;
-    Notification.requestPermission().then(permission => {
-        updateNotificationStatusDisplay();
-        if (permission === "granted") {
-            sendSystemNotification("通知が有効になりました！", "タイムラインの遅延情報などをここにお届けします。");
-        }
-    });
+    Notification.requestPermission().then(() => { updateNotificationStatusDisplay(); });
 }
 
-function sendSystemNotification(title, body) {
-    if ("Notification" in window && Notification.permission === "granted") {
-        try { new Notification(title, { body: body }); } catch (e) { console.log(e); }
-    }
-}
-
-// ⚙️ 遅延シミュレーション
 function simulateDelay(minutes) {
     const targetName = document.getElementById('admin-target-select').value;
-    
-    timelineData.forEach(slot => {
-        if(slot.name === targetName) {
-            slot.delay = minutes;
-        }
-    });
-
+    timelineData.forEach(slot => { if(slot.name === targetName) slot.delay = minutes; });
     renderTimeline();
-    
-    const msg = minutes > 0 
-        ? `【遅延情報】「${targetName}」のステージ進行が約 ${minutes} 分遅れています。`
-        : `【定時運行】「${targetName}」は通常通りの進行に戻りました。`;
-
     const alertBar = document.getElementById('global-alert');
-    document.getElementById('alert-message').innerText = msg;
+    document.getElementById('alert-message').innerText = minutes > 0 ? `遅延中: ${targetName}` : "通常通り";
     alertBar.style.display = 'flex';
-
-    sendSystemNotification(minutes > 0 ? "⚠️ ステージ遅延情報" : "✅ 進行状況復帰", msg);
     toggleSidebar();
 }
 
-function closeAlertBar() {
-    document.getElementById('global-alert').style.display = 'none';
-}
+function closeAlertBar() { document.getElementById('global-alert').style.display = 'none'; }
 
-// UIメニュー操作
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('menu-overlay');
-    if(sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('show');
-    } else {
-        sidebar.classList.add('open');
-        overlay.classList.add('show');
-    }
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
 }
 
-function openModal(modalId) {
-    toggleSidebar();
-    document.getElementById(modalId).classList.add('show');
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
-}
-
-function closeModalOnOverlay(e, modalId) {
-    if (e.target === document.getElementById(modalId)) { closeModal(modalId); }
-}
+function openModal(modalId) { toggleSidebar(); document.getElementById(modalId).classList.add('show'); }
+function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+function closeModalOnOverlay(e, modalId) { if (e.target === document.getElementById(modalId)) closeModal(modalId); }
