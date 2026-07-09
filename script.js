@@ -1,8 +1,8 @@
 // ========================================================
-// ★★★ データ編集エリア ★★★
+// ★★★ データ編集エリア（ここをいじれば追加・変更できます） ★★★
 // ========================================================
 
-// 🖼️ 1. 階層ごとのマップ画像ファイル名（1階〜4階のみ）
+// 🖼️ 1. 階層ごとのマップ画像ファイル名
 const MAP_IMAGES = {
     '1F': 'map1f.png',
     '2F': 'map2f.png',
@@ -11,17 +11,20 @@ const MAP_IMAGES = {
 };
 
 // 🛍️ 2. 出店（クラス・部活）データ
+// 【追加方法】 以下の形式（ { id: 数値, ... }, ）をコピーして末尾（ ] の手前）に貼り付け、数字や文字を書き換えてください。
+// ※ x と y は、マップ画像内の座標（左下が 0,0 で、右上が 1000,1000 になるように自動調整されます）
 const shopData = [
     { id: 1, floor: '1F', title: '1-1：お化け屋敷「呪われた教室」', genre: 'アトラクション', x: 200, y: 400, menu: '恐怖度MAX！暑い夏を吹き飛ばす最恐のお化け屋敷。心臓の弱い方はご注意ください。' },
     { id: 2, floor: '1F', title: '1-2：手作りキックターゲット', genre: 'アトラクション', x: 500, y: 350, menu: '高得点を狙って豪華景品をゲットしよう！お子様大歓迎！' },
     { id: 3, floor: '1F', title: 'PTA：手作りパン＆バザー', genre: '食品', x: 800, y: 450, menu: '焼き立てのメロンパン、あんパン、クロワッサンを販売中！' },
-    { id: 4, floor: '2F', title: '2-1：チュロスファクトリー', genre: '食品', x: 300, y: 600, menu: '揚げたてサ跨サクのチュロス！\n・シナモンシュガー：150円\n・チョコソース：180円' },
+    { id: 4, floor: '2F', title: '2-1：チュロスファクトリー', genre: '食品', x: 300, y: 600, menu: '揚げたてサクサクのチュロス！\n・シナモンシュガー：150円\n・チョコソース：180円' },
     { id: 5, floor: '2F', title: '2-2：カジノ・ロワイヤル', genre: 'アトラクション', x: 600, y: 650, menu: '本格的なブラックジャックやルーレットを擬似チップで体験！' },
     { id: 6, floor: '3F', title: '3-1：レトロゲームセンター', genre: 'アトラクション', x: 500, y: 700, menu: '懐かしのドット絵ゲームや手作りスマートボールで遊べます！' },
     { id: 7, floor: '4F', title: '4-1：パソコン部「自作ゲーム体験」', genre: '展示', x: 400, y: 500, menu: '部員が制作したオリジナルゲームが無料で遊べます！ハイスコアを狙え！' }
 ];
 
 // 🚻 3. トイレ・救護室などの設備データ
+// 【追加方法】 shopDataと同様に、{} のカタマリを増やしていけば、マップ上に専用のアイコンでピンが立ちます。
 const facilityData = [
     { name: "1F トイレ", floor: "1F", x: 150, y: 450, icon: "🚻" },
     { name: "2F トイレ", floor: "2F", x: 150, y: 550, icon: "🚻" },
@@ -31,6 +34,7 @@ const facilityData = [
 ];
 
 // ⏱️ 4. 時程（タイムライン）データ
+// 【追加方法】 idが被らないように注意して増やしてください。dayは「1」か「2」で日数が分かれます。
 const timelineData = [
     { id: 1, day: 1, time: "10:00 - 11:00", name: "吹奏楽部：オープニングアクト", delay: 0 },
     { id: 2, day: 1, time: "11:30 - 13:00", name: "軽音楽部：無敵ライブ", delay: 0 },
@@ -53,8 +57,9 @@ const greetingData = [
     { role: "学校長より", name: "神奈川県立厚木王子高等学校 長", text: "ご来校ありがとうございます。" }
 ];
 
+
 // ========================================================
-// ★★★ システム処理エリア ★★★
+// ★★★ システム処理エリア（領域固定・縮み防止対策済み） ★★★
 // ========================================================
 
 let currentFloor = '1F';
@@ -65,6 +70,9 @@ let map;
 let currentImageLayer = null;
 let markersGroup = [];
 let favorites = JSON.parse(localStorage.getItem('festival_favs')) || [];
+
+// マップの移動可能範囲（左下[0,0] から 右上[1000,1000] に空間を固定）
+const MAP_BOUNDS = [[0, 0], [1000, 1000]];
 
 window.onload = function() {
     initImageMap();
@@ -79,23 +87,36 @@ window.onload = function() {
 function initImageMap() {
     map = L.map('map', {
         crs: L.CRS.Simple,
-        minZoom: -2,
-        maxZoom: 2,
-        center: [500, 500],
-        zoom: -1
+        minZoom: -1,             // 引き（ズームアウト）の限界
+        maxZoom: 2,              // 寄り（ズームイン）の限界
+        maxBounds: MAP_BOUNDS,   // 🗺️【領域固定】これより外にはドラッグできなくなります
+        maxBoundsViscosity: 1.0, // 🗺️ 引っ張ってもゴムみたいに戻り、完全に境界の外へ行かせない
+        attributionControl: false
     });
+
+    // 初期表示の表示位置を画像全体（MAP_BOUNDS）にフィットさせる
+    map.fitBounds(MAP_BOUNDS);
     updateMapFloorImage();
 }
 
-// 🗺️ 画像の自動切り替え
+// 🗺️ 画像の切り替えとサイズ・比率の適正化
 function updateMapFloorImage() {
     if (currentImageLayer) {
         map.removeLayer(currentImageLayer);
     }
-    const bounds = [[0, 0], [1000, 1000]];
     const imageUrl = MAP_IMAGES[currentFloor] || 'map1f.png';
 
-    currentImageLayer = L.imageOverlay(imageUrl, bounds).addTo(map);
+    // 💡 imageOverlay の第3引数にオプションを追加。
+    // スタイルを上書きして、どんなサイズの画像が来ても縦横比が潰れない（縮こまらない）ように対策
+    currentImageLayer = L.imageOverlay(imageUrl, MAP_BOUNDS, {
+        className: 'festival-map-image'
+    }).addTo(map);
+
+    // 画像の潰れ・トリミング失敗感を防ぐためのCSSを動的に適用
+    const style = document.createElement('style');
+    style.innerHTML = `.festival-map-image { object-fit: contain !important; }`;
+    document.head.appendChild(style);
+
     map.invalidateSize();
     updateMapMarkers();
 }
@@ -109,7 +130,10 @@ function switchPage(pageId) {
     event.currentTarget.classList.add('active');
 
     if(pageId === 'map-page' && map) {
-        setTimeout(() => { map.invalidateSize(); }, 200);
+        setTimeout(() => { 
+            map.invalidateSize(); 
+            map.fitBounds(MAP_BOUNDS); // ページ切り替え時にも位置をリセットして迷子防止
+        }, 200);
     }
 }
 
@@ -384,7 +408,7 @@ function simulateDelay(minutes) {
     document.getElementById('alert-message').innerText = msg;
     alertBar.style.display = 'flex';
 
-    sendSystemNotification(minutes > 0 ? "⚠️ ステージ遅延情報" : "✅ 進行状況復旧", msg);
+    sendSystemNotification(minutes > 0 ? "⚠️ ステージ遅延情報" : "✅ 進行状況復急", msg);
     toggleSidebar();
 }
 
