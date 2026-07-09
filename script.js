@@ -63,7 +63,7 @@ window.onload = function() {
     renderStaticModals();
     initAdminSelect();
     updateNotificationStatusDisplay();
-    filterSidebarShops(); // 初期状態で空検索リストを出しておく
+    filterSidebarShops();
 };
 
 function initImageMap() {
@@ -75,9 +75,7 @@ function initImageMap() {
         maxBoundsViscosity: 1.0,
         attributionControl: false,
         zoomSnap: 0.1,
-        // 💡 吹き出しの自動調整は最低限残しつつ、勝手な大移動はさせない設定
-        autoPan: true,
-        autoPanPadding: L.point(15, 15)
+        autoPan: false // マップ全体の強制自動移動を完全無効化
     });
 
     updateMapFloorImage();
@@ -143,7 +141,7 @@ function updateMapMarkers() {
     shopData.filter(s => s.floor === currentFloor).forEach(shop => {
         const imageHtml = shop.image 
             ? `<img src="${shop.image}" class="popup-img" alt="${shop.title}">`
-            : `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e5e7eb;color:#9ca3af;font-size:0.7rem;font-weight:bold;">NO IMAGE</div>`;
+            : `<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e5e7eb;color:#9ca3af;font-size:0.6rem;font-weight:bold;">詳細チェック</div>`;
 
         const popupContent = `
             <div class="popup-location">${shop.location || (shop.floor + '棟')}</div>
@@ -153,8 +151,13 @@ function updateMapMarkers() {
             </div>
         `;
 
+        // 💡ポップアップを右側に小さく配置。自動パンを無効化
         const marker = L.marker([shop.y, shop.x]).addTo(map)
-            .bindPopup(popupContent, { maxWidth: 210, minWidth: 180, autoPan: true });
+            .bindPopup(popupContent, { 
+                maxWidth: 140, 
+                minWidth: 120, 
+                autoPan: false 
+            });
         markersGroup.push(marker);
     });
 
@@ -165,22 +168,18 @@ function updateMapMarkers() {
             iconSize: [30, 30]
         });
         const marker = L.marker([facility.y, facility.x], {icon: customIcon}).addTo(map)
-            .bindPopup(`<b>${facility.name}</b>`);
+            .bindPopup(`<b>${facility.name}</b>`, { autoPan: false });
         markersGroup.push(marker);
     });
 }
 
-// 💡 改善：サイドバーの検索結果をクリックしたときの挙動
 function selectShopFromSidebar(x, y, shopId, targetFloor) {
-    // 1. まずドロワーメニュー（サイドバー）を閉じる
     toggleSidebar();
 
-    // 2. もし違う階ならフロアを切り替え
     if (currentFloor !== targetFloor) {
         switchFloor(targetFloor);
     }
     
-    // 💡 すぐにセンター移動させず、少し余裕をもってからスクロール＆アコーディオン展開のみ実行
     setTimeout(() => {
         const detailDiv = document.getElementById(`details-${shopId}`);
         if (detailDiv) {
@@ -190,13 +189,11 @@ function selectShopFromSidebar(x, y, shopId, targetFloor) {
     }, 250);
 }
 
-// メイン画面の「マップで位置を確認」用（センター強制移動をマイルドに修正）
 function panToCoordinates(x, y, shopId, targetFloor) {
     if (currentFloor !== targetFloor) {
         switchFloor(targetFloor);
     }
     setTimeout(() => {
-        // 強制setViewを廃止し、下部のアコーディオン表示に注力
         const detailDiv = document.getElementById(`details-${shopId}`);
         if (detailDiv) { detailDiv.classList.add('open'); }
     }, 100);
@@ -211,7 +208,6 @@ function openShopDetailFromMap(shopId) {
     }
 }
 
-// 💡 メイン画面側：選ばれている階＆選ばれているタグのみを常時「綺麗にスッキリ」表示する
 function renderShops() {
     const container = document.getElementById('shop-list-container');
     container.innerHTML = '';
@@ -262,7 +258,6 @@ function renderShops() {
     });
 }
 
-// 💡 新設：サイドバー（ハンバーガーメニュー）内での全館リアルタイム検索処理
 function filterSidebarShops() {
     const query = document.getElementById('sidebar-search-box').value.trim();
     const resultsContainer = document.getElementById('sidebar-search-results');
@@ -318,7 +313,6 @@ function filterTag(tag, element) {
     renderShops();
 }
 
-// タイムライン以下の制御
 function renderTimeline() {
     const container = document.getElementById('timeline-container');
     container.innerHTML = '';
